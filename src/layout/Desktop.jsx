@@ -1,32 +1,45 @@
-import { Outlet } from 'react-router-dom';
-import Navbar from '../components/navigation/Navbar';
+import React, { useState } from "react"
+import Toolbar from "./Toolbar"
+import Chat from "../components/modal/Chat";
+import DesktopIcons from "./DesktopIcons";
 
-import Mobilebar from '../components/navigation/Mobilebar';
-import Footer from '../components/Footer';
+export default function Desktop() {
+    const [isChatActive, setIsChatActive] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
-const DefaultLayout = () => {
+    function openChat() {
+        setShowChat(true);
+        setIsChatActive(true);
+    }
+
+    function closeChat() {
+        setShowChat(false);
+        setIsChatActive(false);
+    }
+
     return (
-        <div className="h-full min-h-screen">
-            <div className="flex flex-col md:flex-row">
-                
-                <div className="hidden md:block">
-                    <Navbar />
+        <div
+            className="h-screen w-full relative overflow-hidden bg-cover bg-center"
+            style={{
+                backgroundImage: `url('./assets/wallpapers/win7.jpg')`,
+            }}
+        >
+
+            {!showChat && (
+                <div className="absolute top-4 left-4">
+                    <DesktopIcons showChat={showChat} onChatClick={openChat} />
                 </div>
+            )}
 
-                <main className=" mb-16 sm:mb-0 lg:mt-[-24px] sm:mt-5 w-full">
-                    <div className="overflow-auto md:mt-20">
-                        <Outlet />
-                    </div>
-                    <Footer/>
-                </main>
-
-
-                <div className="block md:hidden">
-                    <Mobilebar />
+            {showChat && (
+                <div className="w-full">
+                    <Chat setShowChat={setShowChat} closeChat={closeChat} />
                 </div>
+            )}
+
+            <div className="absolute bottom-0 w-full">
+                <Toolbar showChat={showChat} isChatActive={isChatActive} openChat={openChat} closeChat={closeChat} />
             </div>
         </div>
-    );
-};
-
-export default DefaultLayout;
+    )
+}
