@@ -22,14 +22,13 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
 
             <Route
               path="/chat"
-              element={user ? <Chat /> : <Navigate to="/auth" replace />}
+              element={<Chat />}
             />
 
-            <Route path="*" element={<Navigate to="/auth" />} />
+            <Route path="*" element={<Navigate to="/chat" />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
