@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { FaChevronDown } from 'react-icons/fa';
-
+import * as Select from '@radix-ui/react-select';
 import Avatar from '../Avatar';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
+import { MdCheckCircleOutline } from 'react-icons/md';
 
 export default function Auth() {
     const { t } = useTranslation("auth");
@@ -16,6 +17,7 @@ export default function Auth() {
 
     const {
         register,
+        control,
         handleSubmit,
         reset,
         formState: { errors },
@@ -25,7 +27,7 @@ export default function Auth() {
             password: "",
             rememberMe: false,
             autoSignIn: false,
-            status: "",
+            status: "online",
         }
     });
 
@@ -35,7 +37,7 @@ export default function Auth() {
             password: "",
             rememberMe: false,
             autoSignIn: false,
-            status: t("status.online"),
+            status: "online",
         });
     }, [t, reset]);
 
@@ -80,24 +82,69 @@ export default function Auth() {
                             />
                             {errors.password && <p className="text-red-500 text-xs">Campo obrigatório</p>}
                         </div>
+
                         <div className="text-left">
                             <a href="#" className="text-blue-600 text-xs hover:underline">{t('login.forgot')}</a>
                         </div>
 
-                        {/* Status Dropdown */}
                         <div className="flex items-center gap-2 text-sm">
                             <span className="text-gray-700">{t('login.session')}</span>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <select
-                                    {...register("status")}
-                                >
-                                    <option value="online">{t('status.online')}</option>
-                                    <option value="away">{t('status.away')}</option>
-                                    <option value="busy">{t('status.busy')}</option>
-                                    <option value="invisible">{t('status.invisible')}</option>
-                                </select>
-                            </div>
+                            <Controller
+                                name="status"
+                                control={control}
+                                render={({ field }) => {
+                                    const colorMap = {
+                                        online: 'bg-green-500',
+                                        away: 'bg-red-500',
+                                        busy: 'bg-orange-400',
+                                        invisible: 'bg-gray-400',
+                                    };
+
+                                    return (
+                                        <Select.Root value={field.value} onValueChange={field.onChange}>
+                                            <Select.Trigger
+                                                className="px-1 py-1 rounded-md border border-gray-300 bg-white text-sm text-gray-800 flex items-center justify-between min-w-[120px]"
+                                                style={{
+                                                    all: 'unset',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    backgroundColor: 'white',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <Select.Value asChild>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className={`w-2.5 h-2.5 rounded-sm ${colorMap[field.value]} border-2 border-gray-300`} />
+                                                        <span>{t(`status.${field.value}`)}</span>
+                                                    </div>
+                                                </Select.Value>
+                                                <Select.Icon>
+                                                    <FaChevronDown className="text-gray-400" />
+                                                </Select.Icon>
+                                            </Select.Trigger>
+
+                                            <Select.Portal>
+                                                <Select.Content className="ml-4 bg-white shadow-md">
+                                                    <Select.Viewport>
+                                                        {['online', 'away', 'busy', 'invisible'].map((value) => (
+                                                            <Select.Item
+                                                                key={value}
+                                                                value={value}
+                                                                className="text-sm px-2 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 cursor-pointer"
+                                                            >
+                                                                <span className={`w-2.5 h-2.5 rounded-sm ${colorMap[value]} border-2 border-gray-300`} />
+                                                                <Select.ItemText>{t(`status.${value}`)}</Select.ItemText>
+                                                            </Select.Item>
+                                                        ))}
+                                                    </Select.Viewport>
+                                                </Select.Content>
+                                            </Select.Portal>
+                                        </Select.Root>
+                                    );
+                                }}
+                            />
+
                         </div>
 
                         {/* Checkboxes */}
@@ -123,7 +170,7 @@ export default function Auth() {
                         </div>
                     </div>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }
