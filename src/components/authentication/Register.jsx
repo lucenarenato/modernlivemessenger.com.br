@@ -1,176 +1,107 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { FaChevronDown } from 'react-icons/fa';
+import * as Select from '@radix-ui/react-select';
+import Avatar from '../Avatar';
+import { AuthContext } from '../../context/AuthContext';
+import { ToastContext } from '../../context/ToastContext';
+import { MdCheckCircleOutline } from 'react-icons/md';
 
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import { MdOutlineAlternateEmail } from "react-icons/md";
-import { RiLockPasswordLine } from "react-icons/ri";
-
-import { registerRequest } from "../../data/authentication";
-import { useAuth } from "../../context/AuthContext";
-import { ToastContext } from "../../context/ToastContext";
-
-export default function Register() {
+export default function Register({ showLoginComponent }) {
     const { t } = useTranslation("auth");
-    const { onLogout } = useAuth();
-    const { showToast } = useContext(ToastContext);
 
     const [isLoading, setIsLoading] = useState(false);
-    const [usernameEnteredByUser, setUsernameEnteredByUser] = useState("");
-    const [emailEnteredByUser, setEmailEnteredByUser] = useState("");
-    const [passwordEnteredByUser, setPasswordEnteredByUser] = useState("");
-    const [showPasswordTyped, setShowPasswordTyped] = useState(false);
-    const [passwordScore, setPasswordScore] = useState(0);
-    const [errors, setErrors] = useState({}); // Estado para erros
+    const { showToast } = useContext(ToastContext);
 
-    const checkPassword = () => {
-        let score = 0;
-        if (passwordEnteredByUser.length >= 6) {
-            score++;
+    const {
+        register,
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        defaultValues: {
+            email: "",
+            password: "",
+            rememberMe: false,
+            autoSignIn: false,
+            status: "online",
         }
-        if (/[a-z]/.test(passwordEnteredByUser)) {
-            score++;
-        }
-        if (/[A-Z]/.test(passwordEnteredByUser)) {
-            score++;
-        }
-        if (/[^a-zA-Z0-9]/.test(passwordEnteredByUser)) {
-            score++;
-        }
-        if (/[0-9]/.test(passwordEnteredByUser)) {
-            score++;
-        }
-        setPasswordScore(score);
-    };
+    });
 
     useEffect(() => {
-        checkPassword()
-    }, [passwordEnteredByUser]);
+        reset({
+            username: "",
+            email: "",
+            password: "",
+        });
+    }, [t, reset]);
 
-    const handleSubmitFormToRegister = (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setErrors({}); // Limpa erros ao iniciar o registro
-
-        // Validação de campos
-        const validationErrors = {};
-        if (!usernameEnteredByUser) validationErrors.username = "Username is required";
-        if (!emailEnteredByUser) validationErrors.email = "Email is required";
-        if (!passwordEnteredByUser) validationErrors.password = "Password is required";
-
-        // Verifica se há erros
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            setIsLoading(false);
-            return;
-        }
-
-        onLogout();
-
-        registerRequest({
-            email: emailEnteredByUser,
-            password: passwordEnteredByUser,
-            language: localStorage.getItem("i18nextLng")
-        })
-            .then(res => {
-                if (res.status === 200) {
-                    showToast("Criado com sucesso!", "success");
-                } else if (res.response.status === 409) {
-                    showToast(res.response.data.message, "error");
-                    if (res.response.data.details[0].domain === "username") {
-                        console.log("username já existe");
-                    } else {
-                        console.log("email já existe");
-                    }
-                }
-                setIsLoading(false);
-            })
-            .catch(err => {
-                showToast("An error occurred during registration.", "error");
-                setIsLoading(false);
-            });
-    }
+    const onSubmit = (data) => {
+        console.log("Form data:", data);
+    };
 
     return (
-        <form className="flex flex-col justify-center items-center" onSubmit={handleSubmitFormToRegister}>
-            <p className="text-primary text-xl font-bold mt-1">Acumulou</p>
-            <p className="dark:text-white mb-4 text-md font-medium mt-5">{t('register.title')}</p>
-
-            {/* Campo de Email */}
-            <div className="flex w-full ml-1 justify-start">
-                <label className="justify-left text-sm font-medium text-red-600">
-                    {errors.email}
-                </label>
-            </div>
-            <div className={`h-12 w-full border ${errors.email ? 'border-red-500' : 'border-none'} bg-gray-200 dark:bg-neutral-800 rounded flex items-center mb-4`}>
-                <MdOutlineAlternateEmail style={{ marginLeft: "5px" }} className="text-gray-400 dark:text-neutral-100 text-lg" />
-                <input
-                    id="input-email"
-                    placeholder={t('inputs.email')}
-                    type="text"
-                    className="flex-1 dark:text-neutral-100 bg-gray-200 dark:bg-neutral-800 min-w-40% px-2 border-none outline-none"
-                    value={emailEnteredByUser}
-                    onChange={(e) => setEmailEnteredByUser(e.target.value)}
-                />
+        <div className="w-full mx-auto bg-white overflow-hidden">
+            <div className="h-32 bg-gradient-to-b from-sky-300 via-sky-200 to-white relative">
+                <div className="absolute top-4 left-8">
+                    <h1 className="text-gray-700 text-lg font-normal">{t('register.title')}</h1>
+                    <h2 className="text-gray-700 text-3xl font-normal">
+                        {t('register.name-one')} <span className="font-bold text-gray-900">{t('register.name-two')}</span>
+                    </h2>
+                </div>
             </div>
 
-            {/* Campo de Senha */}
-            <div className="flex w-full ml-1 justify-start">
-                <label className="justify-left text-sm font-medium text-red-600">
-                    {errors.password}
-                </label>
-            </div>
-            <div className={`h-12 w-full border ${errors.password ? 'border-red-500' : 'border-none'} bg-gray-200 dark:bg-neutral-800 rounded flex items-center`}>
-                <RiLockPasswordLine style={{ marginLeft: "5px" }} className="text-gray-400 dark:text-neutral-100 text-lg" />
-                <input
-                    id="input-password"
-                    type={showPasswordTyped ? "text" : "password"}
-                    placeholder={t('inputs.password')}
-                    className="flex-1 bg-gray-200 dark:bg-neutral-800 min-w-40% px-2 border-none outline-none"
-                    value={passwordEnteredByUser}
-                    onChange={(e) => setPasswordEnteredByUser(e.target.value)}
-                />
-                {showPasswordTyped ? (
-                    <div className="text-gray-400 hover:text-gray-500 dark:text-neutral-600 dark:hover:text-neutral-500">
-                        <VisibilityOffIcon
-                            style={{ marginRight: "10px", marginLeft: "10px", fontSize: "1.2em", cursor: "pointer" }}
-                            onClick={() => setShowPasswordTyped(false)}
-                        />
+            <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-4 -mt-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <div className="flex w-full sm:max-w-20 justify-center">
+                        <Avatar size={82} />
                     </div>
-                ) : (
-                    <div className="text-gray-400 hover:text-gray-500 dark:text-neutral-600 dark:hover:text-neutral-500">
-                        <VisibilityIcon
-                            style={{ marginRight: "10px", marginLeft: "10px", fontSize: "1.2em", cursor: "pointer" }}
-                            onClick={() => setShowPasswordTyped(true)}
-                        />
-                    </div>
-                )}
-            </div>
 
-            {/* Indicador de Força da Senha */}
-            <div className="flex w-full py-2 gap-2">
-                {[...Array(5)].map((_, i) => (
-                    <div className="w-full" key={i}>
-                        <div className={`p-1 rounded-sm ${i < passwordScore ? passwordScore <= 2 ? 'bg-red-900' : passwordScore <= 4 ? 'bg-yellow-400' : 'bg-green-600' : 'bg-gray-200 dark:bg-neutral-800'}`} />
-                    </div>
-                ))}
-            </div>
+                    <div className="flex-1">
+                        <div className="flex flex-col mb-3">
+                            <input
+                                type="text"
+                                placeholder={t('inputs.username')}
+                                {...register("email", { required: true })}
+                                className={`w-80 px-3 py-2 bg-gradient-to-b from-white to-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-400'} rounded-sm shadow-inner focus:outline-none focus:border-blue-500 focus:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_2px_rgba(59,130,246,0.3)] text-gray-800 placeholder:text-gray-500 font-segoe`}
+                            />
+                            {errors.email && <p className="text-red-500 text-xs">Campo obrigatório</p>}
+                        </div>
 
-            {/* Botão de Registro */}
-            <button
-                className="w-full h-12 border-none justify-center items-center rounded bg-primary text-white cursor-pointer"
-                type="submit"
-            >
-                {isLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <CircularProgress size={20} style={{ fontSize: "2px" }} color="secondary" />
-                    </Box>
-                ) : (
-                    <p>{t('register.button')}</p>
-                )}
-            </button>
-        </form>
-    )
+                        <div className="flex flex-col mb-3">
+                            <input
+                                type="email"
+                                placeholder={t('inputs.email')}
+                                {...register("email", { required: true })}
+                                className={`w-80 px-3 py-2 bg-gradient-to-b from-white to-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-400'} rounded-sm shadow-inner focus:outline-none focus:border-blue-500 focus:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_2px_rgba(59,130,246,0.3)] text-gray-800 placeholder:text-gray-500 font-segoe`}
+                            />
+                            {errors.email && <p className="text-red-500 text-xs">Campo obrigatório</p>}
+                        </div>
+
+                        <div className="flex flex-col mb-3">
+                            <input
+                                type="password"
+                                placeholder={t('inputs.password')}
+                                {...register("password", { required: true })}
+                                className={`w-80 px-3 py-2 bg-gradient-to-b from-white to-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-400'} rounded-sm shadow-inner focus:outline-none focus:border-blue-500 focus:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_2px_rgba(59,130,246,0.3)] text-gray-800 placeholder:text-gray-500 font-segoe`}
+                            />
+                            {errors.password && <p className="text-red-500 text-xs">Campo obrigatório</p>}
+                        </div>
+
+                        <div className="flex gap-2 mt-3 justify-left">
+                            <button type="submit" className="default">{t('register.button-enter')}</button>
+                            <button type="button">{t('register.button-cancel')}</button>
+                        </div>
+
+                        <div className="text-left mt-3">
+                            <span className="text-xs text-gray-600">{t('register.login-title')} </span>
+                            <a onClick={showLoginComponent} className="cursor-pointer text-xs hover:underline">{t('register.login-button')}</a>
+                        </div>
+                    </div>
+                </div>
+            </form >
+        </div >
+    );
 }
