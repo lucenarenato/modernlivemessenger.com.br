@@ -8,7 +8,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
 import { MdCheckCircleOutline } from 'react-icons/md';
 
-export default function Auth() {
+export default function Login({ showRegisterComponent, showResetComponent }) {
     const { t } = useTranslation("auth");
 
     const [isLoading, setIsLoading] = useState(false);
@@ -48,10 +48,10 @@ export default function Auth() {
     return (
         <div className="w-full mx-auto bg-white overflow-hidden">
             <div className="h-32 bg-gradient-to-b from-sky-300 via-sky-200 to-white relative">
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-8">
                     <h1 className="text-gray-700 text-lg font-normal">{t('login.title')}</h1>
-                    <h2 className="text-gray-800 text-xl font-normal">
-                        {t('login.name-one')} <span className="font-bold">{t('login.name-two')}</span>
+                    <h2 className="text-gray-700 text-3xl font-normal">
+                        {t('login.name-one')} <span className="font-bold text-gray-900">{t('login.name-two')}</span>
                     </h2>
                 </div>
             </div>
@@ -62,8 +62,8 @@ export default function Auth() {
                         <Avatar size={82} />
                     </div>
 
-                    <div className="flex-1 space-y-3">
-                        <div className="flex flex-col">
+                    <div className="flex-1">
+                        <div className="flex flex-col mb-3">
                             <input
                                 type="email"
                                 placeholder={t('inputs.email')}
@@ -73,7 +73,7 @@ export default function Auth() {
                             {errors.email && <p className="text-red-500 text-xs">Campo obrigatório</p>}
                         </div>
 
-                        <div className="flex flex-col">
+                        <div className="flex flex-col mb-3">
                             <input
                                 type="password"
                                 placeholder={t('inputs.password')}
@@ -84,10 +84,10 @@ export default function Auth() {
                         </div>
 
                         <div className="text-left">
-                            <a href="#" className="text-blue-600 text-xs hover:underline">{t('login.forgot')}</a>
+                            <a onClick={showResetComponent} className="cursor-pointer text-xs hover:underline">{t('login.forgot')}</a>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-sm mt-3 mb-1.5">
                             <span className="text-gray-700">{t('login.session')}</span>
                             <Controller
                                 name="status"
@@ -147,7 +147,6 @@ export default function Auth() {
 
                         </div>
 
-                        {/* Checkboxes */}
                         <div className="space-y-2">
                             <div className="field-row">
                                 <input type="checkbox" id="reminder" {...register("rememberMe")} />
@@ -159,14 +158,14 @@ export default function Auth() {
                             </div>
                         </div>
 
-                        <div className="flex gap-2 mt-6 justify-left">
+                        <div className="flex gap-2 mt-5 justify-left">
                             <button type="submit" className="default">{t('login.button-enter')}</button>
                             <button type="button">{t('login.button-cancel')}</button>
                         </div>
 
-                        <div className="text-left mt-4">
+                        <div className="text-left mt-3">
                             <span className="text-xs text-gray-600">{t('login.register-title')} </span>
-                            <a href="#" className="text-blue-600 text-xs hover:underline">{t('login.register-button')}</a>
+                            <a onClick={showRegisterComponent} className="cursor-pointer text-xs hover:underline">{t('login.register-button')}</a>
                         </div>
                     </div>
                 </div>
