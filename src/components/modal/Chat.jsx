@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import '7.css/dist/7.css';
-import Icon from '../../layout/Icon';
 import DesktopIcons from '../../layout/DesktopIcons';
+import Auth from '../authentication/Auth';
+import Footer from '../Footer';
 
 export default function Chat({ setShowChat, closeChat }) {
     const containerRef = useRef(null);
@@ -96,9 +97,9 @@ export default function Chat({ setShowChat, closeChat }) {
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    transform: 'translate(-50%, -300%)',
+                    transform: 'translate(-50%, -50%)',
                     width: '100%',
-                    maxWidth: '700px',
+                    maxWidth: '550px',
                     maxHeight: '700px',
                     cursor: 'default',
                 }}
@@ -117,7 +118,8 @@ export default function Chat({ setShowChat, closeChat }) {
                         </div>
                     </div>
                     <div className="window-body">
-                        <p>Conteúdo.</p>
+                        <Auth />
+                        <Footer />
                     </div>
                 </div>
             </div>
