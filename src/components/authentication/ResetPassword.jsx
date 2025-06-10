@@ -1,202 +1,142 @@
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
-
-import Box from '@mui/material/Box';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import CircularProgress from '@mui/material/CircularProgress';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { MdOutlineAlternateEmail } from "react-icons/md";
-import { RiLockPasswordLine } from "react-icons/ri";
 import { FaCode } from "react-icons/fa6";
+import { RiLockPasswordLine } from "react-icons/ri";
 
-function generateRandomCode() {
-    let code = "";
-    const possibleDigits = "0123456789";
-    for (let i = 0; i < 6; i++) {
-        const randomIndex = Math.floor(Math.random() * 10);
-        const randomDigit = possibleDigits[randomIndex];
-        code += randomDigit;
-    }
-    return code;
-};
-
-
-export default function ResetPassword() {
+export default function ResetPassword({ setShowLogin }) {
     const { t } = useTranslation("auth");
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [step, setStep] = useState("email"); // email | code | password
 
-    const [emailEnteredByUser, setEmailEnteredByUser] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    // Código que será enviado para o email e código que será inserido no input pelo usuário:
-    const [code, setCode] = useState(false);
-    const [showEnterCodeBox, setEnterCodeBox] = useState(false);
-    const [codeEnteredByUser, setCodeEnteredByUser] = useState("");
-    //
+    const [showPassword, setShowPassword] = useState(false);
 
-    // Caixa de alteração de senha:
-    const [showNewPasswordBox, setNewPasswordBox] = useState(false);
-    const [newPassword, setNewPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(true);
-    //
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        getValues,
+        reset,
+        formState: { errors }
+    } = useForm();
 
-    const handleSubmitEmailEnteredByUser = (e) => {
-        e.preventDefault();
+    const onSubmitEmail = ({ email }) => {
+        setLoading(true);
 
-        //setIsLoading(true)
+        // Aqui você deve chamar sua API para enviar o código para o e-mail
+        // await api.sendCodeToEmail(email, code)
 
-        var randomCode = generateRandomCode();
-        setCode(randomCode);
-        console.log(randomCode);
+        setTimeout(() => {
+            setLoading(false);
+            setStep("code");
+        }, 1000);
+    };
 
-        setEnterCodeBox(true);
-
-    }
-    //
-
-    // Na caixa para inserir o código enviado ao email:
-    const handleCheckResetCode = (e) => {
-        e.preventDefault()
-        if (code === codeEnteredByUser) {
-            setCode(false);
-            setCodeEnteredByUser("");
-            setEnterCodeBox(false);
-            setNewPasswordBox(true);
+    const onSubmitCode = ({ code }) => {
+        if (code === generatedCode) {
+            setStep("password");
+        } else {
+            alert("Código inválido.");
         }
     };
-    //
 
-    // Checar a nova senha e fazer uma requisição de alteração:
-    const handleCheckNewPassword = (e) => {
-        e.preventDefault();
-
+    const onSubmitPassword = ({ newPassword }) => {
+        console.log("Nova senha:", newPassword);
+        // Aqui você faz a chamada para atualizar a senha no backend
+        alert("Senha alterada com sucesso!");
+        reset();
+        setStep("email");
     };
-    //
 
-    const cancelReset = () => {
-        setCode(false);
-        setCodeEnteredByUser("");
-        setNewPassword("");
-        setUserEmailEnteredByUser("");
-        setNewPasswordBox(false);
-    }
-
+    const cancelAll = () => {
+        reset();
+        setStep("email");
+        setGeneratedCode("");
+    };
 
     return (
-        <div className="flex flex-col justify-center items-center">
-            <p className="text-primary text-xl font-bold mt-1">Acumulou</p>
+        <div className="w-full max-w-sm mx-auto mt-10 bg-white shadow-lg p-6 rounded-md">
+            <h2 className="text-xl font-semibold text-center mb-4">Redefinir Senha</h2>
 
-            {(showEnterCodeBox && showNewPasswordBox == false) ? (
-                <form className="w-full">
-                    <div className="flex justify-center">
-                        <p className="dark:text-neutral-200 mb-4 text-md font-medium mt-5">{t('email.enter-code-title')}</p>
-                    </div>
-
-                    <div className="h-12 w-full border bg-gray-200 dark:bg-neutral-800 border-none rounded flex items-center mb-3">
-                        <FaCode style={{ marginLeft: "5px" }} className="text-gray-400 dark:text-neutral-100 text-lg" />
+            {step === "email" && (
+                <form onSubmit={handleSubmit(onSubmitEmail)}>
+                    <label className="block mb-2 text-sm font-medium">E-mail</label>
+                    <div className="flex items-center bg-gray-100 rounded px-2 mb-3">
+                        <MdOutlineAlternateEmail className="text-gray-500" />
                         <input
-                            placeholder={t('inputs.code')}
-                            type="text"
-                            className="flex-1 dark:text-neutral-200 bg-gray-200 dark:bg-neutral-800 min-w-40% px-4 border-none outline-none"
-                            value={codeEnteredByUser}
-                            onChange={(e) => setCodeEnteredByUser(e.target.value)}
+                            type="email"
+                            placeholder="seu@email.com"
+                            className="flex-1 p-2 bg-gray-100 outline-none"
+                            {...register("email", { required: "Informe o e-mail" })}
                         />
                     </div>
-
-                    <div className="flex flex-row justify-between w-full gap-2">
-                        <button
-                            className="border-none h-10 w-1/2 bg-green-600 hover:bg-green-700 rounded-md text-white cursor-pointer font-medium hover:bg-blue-700"
-                            onClick={handleCheckResetCode}
-                        >
-                            {t('email.confirm')}
-                        </button>
-
-                        <button className="border-none h-10 w-1/2 bg-red-500 dark:bg-red-600 dark:hover:bg-red-500 hover:bg-red-600 rounded-md text-white cursor-pointer font-medium"
-                            onClick={cancelReset}
-                        >
-                            {t('email.cancel')}
-                        </button>
-
-                    </div>
-                </form>
-
-            ) : (code == false && showNewPasswordBox == true) ? (
-                <form className="w-full">
-                    <div className="flex justify-center">
-                        <p className="dark:text-neutral-200 mb-4 text-md font-medium mt-5">{t('email.enter-new-password')}</p>
-                    </div>
-
-                    <div className="h-12 w-full border bg-gray-200 dark:bg-neutral-800 border-none rounded flex items-center mb-3">
-                        <RiLockPasswordLine style={{ marginLeft: "5px" }} className="text-gray-400 dark:text-neutral-100 text-lg" />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder={t('email.button')}
-                            className="flex-1 dark:text-neutral-200  min-w-40% px-2 bg-gray-200 dark:bg-neutral-800 border-none outline-none"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                        />
-
-                        {showPassword ? (
-
-                            <VisibilityOffIcon className="text-gray-400 hover:text-gray-500 dark:text-neutral-600 dark:hover:text-neutral-500"
-                                style={{ marginRight: "10px", marginLeft: "10px", fontSize: "1.2em", cursor: "pointer" }}
-                                onClick={() => setShowPassword(false)}
-                            />
-
-                        ) : (
-
-                            <VisibilityIcon className="text-gray-400 hover:text-gray-500 dark:text-neutral-600 dark:hover:text-neutral-500"
-                                style={{ marginRight: "10px", marginLeft: "10px", fontSize: "1.2em", cursor: "pointer" }}
-                                onClick={() => setShowPassword(true)}
-                            />
-
-                        )}
-                    </div>
-
-                    <div className="flex flex-row justify-between w-full gap-2">
-                        <button
-                            className="border-none h-10 w-full bg-primary rounded-md text-white cursor-pointer font-medium"
-                            onClick={cancelReset}
-                        >
-                            {t('email.button')}
-                        </button>
-                    </div>
-                </form>
-
-            ) : (
-                <form className="w-full">
-                    <div className="flex justify-center">
-                        <p className="dark:text-neutral-200 mb-4 text-md font-medium mt-5">{t('email.title')}</p>
-                    </div>
-
-                    <div className="h-12 w-full border dark:text-neutral-200 bg-gray-200 dark:bg-neutral-800 border-none rounded flex items-center mb-3">
-                        <MdOutlineAlternateEmail style={{ marginLeft: "5px" }} className="text-gray-400 dark:text-neutral-100 text-lg" />
-                        <input
-                            placeholder={t('inputs.email')}
-                            type="text"
-                            className="flex-1 dark:text-neutral-200  bg-gray-200 dark:bg-neutral-800 px-2 border-none outline-none w-full"
-                            value={emailEnteredByUser}
-                            onChange={(e) => setEmailEnteredByUser(e.target.value)}
-                        />
-                    </div>
+                    {errors.email && <p className="text-red-500 text-sm mb-2">{errors.email.message}</p>}
 
                     <button
-                        disabled={isLoading}
                         type="submit"
-                        className="w-full h-12 justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                        onClick={handleSubmitEmailEnteredByUser || code}
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md"
                     >
-                        {isLoading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <CircularProgress size={20} style={{ fontSize: "2px" }} color="secondary" />
-                            </Box>
-                        ) : (
-                            <p>{t('email.button')}</p>
-                        )}
+                        {loading ? <CircularProgress size={20} color="inherit" /> : "Enviar código"}
                     </button>
                 </form>
             )}
 
+            {step === "code" && (
+                <form onSubmit={handleSubmit(onSubmitCode)}>
+                    <label className="block mb-2 text-sm font-medium">Código de verificação</label>
+                    <div className="flex items-center bg-gray-100 rounded px-2 mb-3">
+                        <FaCode className="text-gray-500" />
+                        <input
+                            type="text"
+                            placeholder="123456"
+                            className="flex-1 p-2 bg-gray-100 outline-none"
+                            {...register("code", {
+                                required: "Informe o código",
+                                pattern: { value: /^[0-9]{6}$/, message: "Código inválido" }
+                            })}
+                        />
+                    </div>
+                    {errors.code && <p className="text-red-500 text-sm mb-2">{errors.code.message}</p>}
+
+                    <div className="flex gap-2">
+                        <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-md">
+                            Verificar
+                        </button>
+                        <button type="button" onClick={cancelAll} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-md">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {step === "password" && (
+                <form onSubmit={handleSubmit(onSubmitPassword)}>
+                    <label className="block mb-2 text-sm font-medium">Nova senha</label>
+                    <div className="flex items-center bg-gray-100 rounded px-2 mb-3">
+                        <RiLockPasswordLine className="text-gray-500" />
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Nova senha"
+                            className="flex-1 p-2 bg-gray-100 outline-none"
+                            {...register("newPassword", {
+                                required: "Informe a nova senha",
+                                minLength: { value: 6, message: "Mínimo 6 caracteres" }
+                            })}
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </button>
+                    </div>
+                    {errors.newPassword && <p className="text-red-500 text-sm mb-2">{errors.newPassword.message}</p>}
+
+                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">
+                        Redefinir senha
+                    </button>
+                </form>
+            )}
         </div>
-    )
+    );
 }
