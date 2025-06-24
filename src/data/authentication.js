@@ -2,7 +2,9 @@ import { requestConfig } from "./config";
 
 export const loginRequest = async (credentials) => {
     try {
-        const res = await requestConfig.post("/v1/login", credentials);
+        console.log(requestConfig)
+        const res = await requestConfig.post("/auth/sign-in", credentials);
+        console.log(res)
         return res
     } catch (err) {
         return err.response
@@ -11,7 +13,17 @@ export const loginRequest = async (credentials) => {
 
 export const registerRequest = async (user) => {
     try {
-        const res = await requestConfig.post("/v1/register", user);
+        const res = await requestConfig.post("/auth/sign-up", user);
+        return res
+    } catch (err) {
+        return err.response
+    }
+};
+
+
+export const resetPassword = async (data) => {
+    try {
+        const res = await requestConfig.post("/email/reset-code", data);
         return res
     } catch (err) {
         return err.response
