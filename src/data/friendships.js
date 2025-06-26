@@ -38,7 +38,7 @@ export const getPendingFriendshipsInvites = async () => {
 
 export const accpeptFriendshipInvite = async (id) => {
     try {
-        const res = await requestConfig.post(`/friendships/accpet/${id}`);
+        const res = await requestConfig.post(`/friendships/accept/${id}`);
         return res
     } catch (err) {
         return err.response
