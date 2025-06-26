@@ -31,99 +31,218 @@
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 10; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 10;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
-.cursor {
-  animation: blink 1s infinite;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.aerobutton {
+  background-color: transparent;
+  border: 2px solid transparent;
 }
 
-.meu-botao {
-  position: relative;
-  margin-top: 327px;
-  border-color: var(--primary-color);
-  border-width: 2px;
-  border-radius: 100px;
-  width: fit-content;
-  backdrop-filter: blur(5px);
-  transition: all ease .2s;
-  flex-shrink: 0;
-  padding: 1;
-  padding-right: 2;
-  
-  transform: translateY(-9.4rem) translateX(3.15rem) scale(1.2);
+.aerobutton:hover {
+  border-image: url('/assets/general/aerobutton_border.png') 2 round;
+  background-size: 100% 100%;
 }
 
-.meu-botao::before{
-  content: "";
-  position: absolute;
-  top: 45%;
-  left: -55px;
-  width: 55px;
-  height: 70px;
-  margin-left: -2px;
-  border: 2px solid var(--primary-color);
-  border-bottom: none;
-  border-right: none;
-  border-top-left-radius: 50px;
+.aerobutton:active {
+  border-image: url('/assets/general/aerobutton_border_down.png') 2 round;
 }
 
-#root {
-  background-color: var(--background-color);
+.divider {
+  box-shadow: 0 3px 4px black;
 }
 
-#footer {
-  bottom: 0;
+.white-light {
+  text-shadow: 0 1px 3px white;
 }
 
-/* These styles are used in the timeline component */
-.scroll-stylized {
-  overflow: hidden;
-  overflow-y: scroll;
+.searchbar {
+  background-image: url('.//assets/general/magnifying-glass.png');
+  /* URL de votre icône SVG locale */
+  background-size: 12px 12px;
+  /* Taille de l'icône */
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  /* Position de l'icône */
+  box-shadow: inset 0px 7px 6px -7px rgba(0, 0, 0, 0.1);
 }
 
-.scroll-stylized::-webkit-scrollbar {
-  width: 3px;
-  height: 5.5px;
-  border-radius: 5px; 
-} 
-
-.scroll-stylized::-webkit-scrollbar-thumb{
-  background-color: var(--scroll-stylized-color);
-  border-radius: 5px;
-}
-/* */
-
-/* These styles are used in the default page scroll and in the terminal */
-.default-scroll::-webkit-scrollbar {
-  width: 12px;
+.searchbar:hover {
+  border: 1px solid #179bf3;
 }
 
-.default-scroll::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-color);
+.searchbar:focus {
+  border: 1px solid #179bf3;
+  outline: none;
 }
 
-.default-scroll::-webkit-scrollbar-track {
-  background-color: var(--scrollbar-track-color);
-}
-/* */
-
-#navbar-color {
-  background-color: var(--navbar-color);
-}
-
-#footer-color {
-  background-color: #1A242D;
+.hovercontact:hover {
+  cursor: pointer;
+  border: 1px solid #80d2f1;
+  border-radius: 3px;
+  background: rgb(255, 255, 255);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(200, 234, 249, 1) 70%, rgb(198, 237, 255) 97%);
 }
 
-.carousel-slide {
-  transition: all 1s ease-in-out;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.carousel-slide.active {
+.fade-in {
   opacity: 1;
-  pointer-events: auto;
+  transition: opacity 1s ease-in;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+
+@keyframes nudge {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
+
+.nudge {
+  animation: nudge 0.5s;
+  /* Duration of the animation */
+  animation-iteration-count: 1;
+  /* Number of iterations of the animation */
+  overflow: hidden;
+  /* Hide scrollbars */
+  -ms-overflow-style: none;
+  /* Hide scrollbar for Internet Explorer, Edge */
+  scrollbar-width: none;
+  /* Hide scrollbar for Firefox */
+}
+
+body {
+  overflow: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.link {
+  color: #1232c2;
+}
+
+.link:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.usertiles-shadow {
+  box-shadow: 3px 2px 4px 0px rgba(0, 0, 0, 0.35);
+}
+
+/* -----------------WHATS NEW COMPONENT CSS----------------- */
+
+.whats-new-arrow-previous {
+  height: 17px;
+  width: 17px;
+  background-image: url('/assets/general/whats_new_arrow_previous.png');
+  cursor: pointer;
+}
+
+.whats-new-arrow-previous:active {
+  background-image: url('/assets/general/whats_new_arrow_previous_active.png');
+}
+
+.whats-new-arrow-previous:hover {
+  background-image: url('/assets/general/whats_new_arrow_previous_hover.png');
+}
+
+.whats-new-arrow-next {
+  height: 17px;
+  width: 17px;
+  background-image: url('/assets/general/whats_new_arrow_next.png');
+  cursor: pointer;
+}
+
+.whats-new-arrow-next:active {
+  background-image: url('/assets/general/whats_new_arrow_next_active.png');
+}
+
+.whats-new-arrow-next:hover {
+  background-image: url('/assets/general/whats_new_arrow_next_hover.png');
+}
+
+.whats-new-settings {
+  height: 10px;
+  width: 10px;
+  background-image: url('/assets/general/whats_new_settings.png');
+  cursor: pointer;
+}
+
+.whats-new-settings:hover {
+  background-image: url('/assets/general/whats_new_settings_hover.png');
+}
+
+/* -----------------WHATS NEW COMPONENT CSS----------------- */
+
+.hoverscene {
+  border: transparent 1px solid;
+}
+
+.hoverscene:hover {
+  border: 1px solid #b9d7fc;
+  border-radius: 3px;
+  background: rgb(255, 255, 255);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(200, 234, 249, 1) 70%, rgb(198, 237, 255) 97%);
+}
+
+.selectedscene {
+  border: 1px solid #84acdd;
+  border-radius: 3px;
+  background: rgb(255, 255, 255);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(200, 234, 249, 1) 70%, rgb(198, 237, 255) 97%);
 }
