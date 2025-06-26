@@ -6,7 +6,7 @@ import * as Select from '@radix-ui/react-select';
 import Avatar from '../Avatar';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
-import { MdCheckCircleOutline } from 'react-icons/md';
+import { loginRequest } from '../../data/authentication'
 
 export default function Login({ showRegisterComponent, showResetComponent }) {
     const { t } = useTranslation("auth");
@@ -42,12 +42,42 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
     }, [t, reset]);
 
     const onSubmit = (data) => {
-        console.log("Form data:", data);
+        setIsLoading(true);
+
+        loginRequest({
+            email: data.email,
+            password: data.password,
+        })
+            .then(response => {
+                if (response.status == 201) {
+                    login(response.data, data);
+                    setIsLoading(false);
+                    showToast("Autenticado com sucesso.", "success");
+                    return
+                }
+                if (response.status == 401 || response.status == 404) {
+                    showToast("Credenciais inválidas.", "error");
+                    setIsLoading(false);
+                }
+                else {
+                    showToast("Algo ocorreu mal no login.", "error");
+                    setIsLoading(false);
+                }
+            })
+            .catch(err => {
+                showToast("An error occurred during login.", "error");
+                setIsLoading(false);
+            });
+
     };
 
+
     return (
-        <div className="w-full mx-auto bg-white overflow-hidden">
-            <div className="h-32 bg-gradient-to-b from-sky-300 via-sky-200 to-white relative">
+        <div
+            className="w-full mx-auto bg-no-repeat bg-[length:100%_100px]"
+            style={{ backgroundImage: 'url("/assets/background/background.jpg")' }}
+        >
+            <div className="h-32 relative">
                 <div className="absolute top-4 left-8">
                     <h1 className="text-gray-700 text-lg font-normal">{t('login.title')}</h1>
                     <h2 className="text-gray-700 text-3xl font-normal">
@@ -172,4 +202,5 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
             </form >
         </div >
     );
-}
+
+};
