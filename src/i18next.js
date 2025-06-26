@@ -15,21 +15,12 @@ i18n
       escapeValue: false,
     },
     ns: [
-      '404', 
-      'announcement',
-      'auth', 
-      'blog', 
-      'contact', 
-      'footer', 
-      'hero', 
-      'home', 
-      'navigation',
-      'post',
-      'resume',
-      'terminal',
-      'vision' 
+      '404',
+      'auth',
+      'chat',
+      'footer'
     ],
-    defaultNS: 'blog',
+    defaultNS: '404',
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
