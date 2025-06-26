@@ -19,7 +19,7 @@ export const ToastProvider = ({ children }) => {
 
     const showToast = (message, type = null, colored = false) => {
         const options = {
-            position: "bottom-left",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -42,7 +42,7 @@ export const ToastProvider = ({ children }) => {
         <ToastContext.Provider value={{ showToast, changeToastTheme }}>
             {children}
             <ToastContainer
-                position="bottom-left"
+                position="bottom-right"
                 autoClose={5000}
                 hideProgressBar={false}
                 newestOnTop
