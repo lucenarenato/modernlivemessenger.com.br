@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { FaChevronDown } from 'react-icons/fa';
 import * as Select from '@radix-ui/react-select';
 import Avatar from '../Avatar';
-import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
-import { MdCheckCircleOutline } from 'react-icons/md';
+import { registerRequest } from '../../data/authentication'
 
 export default function Register({ showLoginComponent }) {
     const { t } = useTranslation("auth");
@@ -24,9 +23,7 @@ export default function Register({ showLoginComponent }) {
         defaultValues: {
             email: "",
             password: "",
-            rememberMe: false,
-            autoSignIn: false,
-            status: "online",
+            username: "",
         }
     });
 
@@ -39,7 +36,34 @@ export default function Register({ showLoginComponent }) {
     }, [t, reset]);
 
     const onSubmit = (data) => {
-        console.log("Form data:", data);
+        setIsLoading(true);
+
+        registerRequest({
+            email: data.email,
+            password: data.password,
+            username: data.username,
+        })
+            .then(response => {
+                if (response.status == 201) {
+                    setIsLoading(false);
+                    showToast("Conta criada com sucesso.", "success");
+                    return
+                }
+                if (response.status == 409) {
+                    showToast("Já existe um usuário cadastrado com esse e-mail.", "error");
+                    setIsLoading(false);
+                }
+                else {
+                    showToast("Algo ocorreu mal ao criar uma conta.", "error");
+                    setIsLoading(false);
+                }
+            })
+            .catch(err => {
+                console.log(err)
+                showToast("An error occurred during the proccess.", "error");
+                setIsLoading(false);
+            });
+
     };
 
     return (
@@ -64,10 +88,10 @@ export default function Register({ showLoginComponent }) {
                             <input
                                 type="text"
                                 placeholder={t('inputs.username')}
-                                {...register("email", { required: true })}
-                                className={`w-80 px-3 py-2 bg-gradient-to-b from-white to-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-400'} rounded-sm shadow-inner focus:outline-none focus:border-blue-500 focus:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_2px_rgba(59,130,246,0.3)] text-gray-800 placeholder:text-gray-500 font-segoe`}
+                                {...register("username", { required: true })}
+                                className={`w-80 px-3 py-2 bg-gradient-to-b from-white to-gray-50 border ${errors.username ? 'border-red-500' : 'border-gray-400'} rounded-sm shadow-inner focus:outline-none focus:border-blue-500 focus:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_2px_rgba(59,130,246,0.3)] text-gray-800 placeholder:text-gray-500 font-segoe`}
                             />
-                            {errors.email && <p className="text-red-500 text-xs">Campo obrigatório</p>}
+                            {errors.username && <p className="text-red-500 text-xs">Campo obrigatório</p>}
                         </div>
 
                         <div className="flex flex-col mb-3">
