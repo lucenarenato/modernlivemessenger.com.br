@@ -20,6 +20,14 @@ export const registerRequest = async (user) => {
     }
 };
 
+export const checkToken = async () => {
+    try {
+        const res = await requestConfig.get("/auth/check-token");
+        return res
+    } catch (err) {
+        return err.response
+    }
+};
 
 export const resetPassword = async (data) => {
     try {
