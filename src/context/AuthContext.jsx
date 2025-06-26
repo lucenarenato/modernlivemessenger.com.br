@@ -4,6 +4,7 @@ import secureLocalStorage from 'react-secure-storage';
 import { ToastContext } from './ToastContext';
 import { useTranslation } from 'react-i18next';
 import { checkToken } from '../data/authentication';
+import { updateAvatarAndBanner, updateBio, updateStatus, updateUsername } from '../data/users';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -91,8 +92,58 @@ export const AuthProvider = ({ children }) => {
     return true
   }
 
+  function updateUserField(field, value, apiCall, toastKey) {
+    setUser((prevUser) => {
+      if (!prevUser) return prevUser;
+
+      const previousValue = prevUser[field];
+      const updatedUser = { ...prevUser, [field]: value };
+      setUser(updatedUser);
+      secureLocalStorage.setItem('flm-user', updatedUser);
+
+      apiCall({ [field]: value })
+        .then((res) => {
+          if (res.status !== 200) {
+            revertUser();
+          }
+        })
+        .catch(() => {
+          revertUser();
+        });
+
+      function revertUser() {
+        const revertedUser = { ...updatedUser, [field]: previousValue };
+        setUser(revertedUser);
+        secureLocalStorage.setItem('flm-user', revertedUser);
+        showToast(t(toastKey) || "Erro ao atualizar.", "error");
+      }
+
+      return updatedUser;
+    });
+  }
+
+  function changeStatus(status) {
+    updateUserField("status", status, updateStatus, "toast.error-updating-status");
+  }
+
+  function changeUsername(username) {
+    updateUserField("username", username, updateUsername, "toast.error-updating-username");
+  }
+
+  function changeBio(bio) {
+    updateUserField("bio", bio, updateBio, "toast.error-updating-bio");
+  }
+
+  function changeAvatar(avatar) {
+    updateUserField("avatar", avatar, updateAvatarAndBanner, "toast.error-updating-avatar");
+  }
+
+  function changeBanner(banner) {
+    updateUserField("banner", banner, updateAvatarAndBanner, "toast.error-updating-banner");
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, checkSession }}>
+    <AuthContext.Provider value={{ user, token, login, logout, checkSession, changeStatus, changeUsername, changeBio, changeAvatar, changeBanner }}>
       {children}
     </AuthContext.Provider>
   );
