@@ -9,7 +9,7 @@ export const sendMessage = async (data) => {
     }
 };
 
-export const getMessages = async (chat_id) => {
+export const getMessagesByChat = async (chat_id) => {
     try {
         const res = await requestConfig.get(`/messages/chat/${chat_id}`);
         return res
@@ -18,9 +18,18 @@ export const getMessages = async (chat_id) => {
     }
 };
 
-export const UnreadMessages = async (data) => {
+export const getAllMessages = async () => {
     try {
-        const res = await requestConfig.get("/unread-messages/reset", data);
+        const res = await requestConfig.get(`/messages/chats`);
+        return res
+    } catch (err) {
+        return err.response
+    }
+};
+
+export const unreadMessages = async (data) => {
+    try {
+        const res = await requestConfig.post("/unread-messages/reset", data);
         return res
     } catch (err) {
         return err.response
