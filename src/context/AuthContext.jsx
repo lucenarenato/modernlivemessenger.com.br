@@ -6,8 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { checkToken } from '../data/authentication';
 import { updateAvatarAndBanner, updateBio, updateStatus, updateUsername } from '../data/users';
 
-import { useSocket } from './SocketContext';
-
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -16,8 +14,6 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-
-  const socket = useSocket();
 
   useEffect(() => {
     const storedUser = secureLocalStorage.getItem('flm-user');
@@ -65,7 +61,6 @@ export const AuthProvider = ({ children }) => {
     secureLocalStorage.setItem('flm-user', data.user);
     secureLocalStorage.setItem('flm-token', tokenData);
 
-    socket?.connectOnSocket?.();
   }
 
   function logout() {
@@ -75,8 +70,6 @@ export const AuthProvider = ({ children }) => {
 
     setUser(null);
     setToken(null);
-
-    socket?.disconnectFromSocket?.();
 
     showToast(t("toast.logout"), "success")
   }

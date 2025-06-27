@@ -4,7 +4,7 @@ import secureLocalStorage from 'react-secure-storage';
 import { AuthContext } from './AuthContext';
 import { getFriendships, getPendingFriendshipsInvites } from '../data/friendships';
 import { ToastContext } from './ToastContext';
-import { getAllMessages, getMessages, getMessagesByChat, sendMessage } from '../data/messages';
+import { getAllMessages, getMessagesByChat, sendMessage } from '../data/messages';
 
 const SOCKET_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
