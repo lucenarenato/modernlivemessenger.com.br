@@ -5,6 +5,9 @@ import { ToastContext } from './ToastContext';
 import { useTranslation } from 'react-i18next';
 import { checkToken } from '../data/authentication';
 import { updateAvatarAndBanner, updateBio, updateStatus, updateUsername } from '../data/users';
+
+import { useSocket } from './SocketContext';
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -14,10 +17,17 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
+  const socket = useSocket();
+
   useEffect(() => {
     const storedUser = secureLocalStorage.getItem('flm-user');
-    const storedToken = secureLocalStorage.getItem('flm-token');
+    if (!storedUser) {
+      secureLocalStorage.removeItem('flm-user');
+      secureLocalStorage.removeItem('flm-token');
+      return
+    }
 
+    const storedToken = secureLocalStorage.getItem('flm-token');
     if (storedToken && typeof storedToken === 'object' && storedToken.expiresAt) {
       const now = new Date();
       const expiresAt = new Date(storedToken.expiresAt);
@@ -54,42 +64,49 @@ export const AuthProvider = ({ children }) => {
 
     secureLocalStorage.setItem('flm-user', data.user);
     secureLocalStorage.setItem('flm-token', tokenData);
+
+    socket?.connectOnSocket?.();
   }
 
   function logout() {
+    secureLocalStorage.removeItem('flm-user');
+    secureLocalStorage.removeItem('flm-token');
+    secureLocalStorage.removeItem('chatMessages');
+
     setUser(null);
     setToken(null);
 
-    secureLocalStorage.removeItem('flm-user');
-    secureLocalStorage.removeItem('flm-tokens');
+    socket?.disconnectFromSocket?.();
 
     showToast(t("toast.logout"), "success")
-
   }
 
-  function checkSession() {
+  async function checkSession() {
     const storedToken = secureLocalStorage.getItem('flm-token');
-    if (!storedToken) return false;
+    if (!storedToken) {
+      logout();
+      return false;
+    }
 
     const now = new Date();
     const expiresAt = new Date(storedToken.expiresAt);
     if (now > expiresAt) {
-      return false
+      logout();
+      return false;
     }
 
-    checkToken()
-      .then(response => {
-        console.log(response)
-        if (response.status === 200) {
-          return true
-        }
-        else return false
-      })
-      .catch(err => {
-        return false
-      })
-
-    return true
+    try {
+      const response = await checkToken();
+      if (response.status === 200) {
+        return true;
+      } else {
+        logout();
+        return false;
+      }
+    } catch (err) {
+      logout();
+      return false;
+    }
   }
 
   function updateUserField(field, value, apiCall, toastKey) {
