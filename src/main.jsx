@@ -34,6 +34,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </WindowManagerProvider>
         </PortfolioThemeProvider>
       </ToastProvider>
-    </ThemeProvider>
+    </ThemeProvider >
   </>
 )
