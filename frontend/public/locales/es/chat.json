@@ -1,0 +1,8 @@
+{
+    "status": {
+        "online": "Disponível",
+        "away": "Ausente",
+        "busy": "Ocupado",
+        "invisible": "Invisível"
+    }
+}
