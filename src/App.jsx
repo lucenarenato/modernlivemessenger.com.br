@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './ErrorBoundary';
 import Desktop from './pages/Desktop';
 
-import { AuthContext, AuthProvider } from './context/AuthContext';
+import { AuthContext } from './context/AuthContext';
 import { ChatContext } from './context/ChatContext';
 
 function App() {
@@ -26,19 +26,17 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+      <BrowserRouter>
+        <Routes>
 
-            <Route
-              path="/chat"
-              element={<Desktop />}
-            />
+          <Route
+            path="/chat"
+            element={<Desktop />}
+          />
 
-            <Route path="*" element={<Navigate to="/chat" />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+          <Route path="*" element={<Navigate to="/chat" />} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }
