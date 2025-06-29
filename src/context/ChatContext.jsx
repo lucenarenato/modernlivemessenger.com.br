@@ -17,6 +17,7 @@ export const ChatProvider = ({ children }) => {
     const [contacts, setContacts] = useState([
         {
             "id": 0,
+            "ai": true,
             "bio": "I'm not simple, i'm a super AI",
             "isFavorite": true,
             "status": "online",
@@ -59,6 +60,7 @@ export const ChatProvider = ({ children }) => {
                 if (response.status == 200) {
                     const aiContact = {
                         "id": 0,
+                        "ai": true,
                         "bio": "I'm not simple, i'm a super AI",
                         "isFavorite": true,
                         "status": "online",
@@ -129,6 +131,14 @@ export const ChatProvider = ({ children }) => {
             console.error(err);
             showToast("Erro ao enviar a mensagem.", "error");
         }
+    }
+
+
+    async function addMessageWithAI(chatId, message) {
+        setMessages(prev => ({
+            ...prev,
+            [chatId]: [...(prev[chatId] || []), message]
+        }));
     }
 
     function getMessagesByChat(chat_id) {
@@ -292,6 +302,7 @@ export const ChatProvider = ({ children }) => {
             fetchPendingInvites,
             messages,
             addMessage,
+            addMessageWithAI,
             getMessagesByChat,
             getMessages,
             selectedContact,
