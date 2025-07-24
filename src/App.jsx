@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './ErrorBoundary';
 import Desktop from './pages/Desktop';
 
-import { AuthContext } from './context/AuthContext';
+import { AuthContext, AuthProvider } from './context/AuthContext';
 import { ChatContext } from './context/ChatContext';
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
 
     const verifySession = async () => {
       const sessionValid = await checkSession();
-      console.log("Sessão válida?", sessionValid);
+      console.log("Valid session?", sessionValid);
       if (sessionValid) {
         connectOnSocket();
       }
@@ -26,17 +26,19 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <Routes>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
 
-          <Route
-            path="/chat"
-            element={<Desktop />}
-          />
+            <Route
+              path="/chat"
+              element={<Desktop />}
+            />
 
-          <Route path="*" element={<Navigate to="/chat" />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<Navigate to="/chat" />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

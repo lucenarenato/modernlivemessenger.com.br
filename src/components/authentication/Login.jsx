@@ -7,14 +7,12 @@ import Avatar from '../Avatar';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
 import { loginRequest } from '../../data/authentication'
-import { ChatContext } from '../../context/ChatContext';
 
 export default function Login({ showRegisterComponent, showResetComponent }) {
     const { t } = useTranslation("auth");
 
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useContext(AuthContext);
-    const { connectOnSocket } = useContext(ChatContext);
     const { showToast } = useContext(ToastContext);
 
     const {
@@ -54,7 +52,6 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
                 if (response.status == 201) {
                     login(response.data, data);
                     setIsLoading(false);
-                    connectOnSocket()
                     showToast("Autenticado com sucesso.", "success");
                     return
                 }

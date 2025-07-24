@@ -7,16 +7,23 @@ import { ChatContext } from '../../context/ChatContext';
 export default function Contacts() {
     const { contacts, getContacts } = useContext(ChatContext);
 
-    const favoritesContacts = contacts.filter((contact) => contact.isFavorite);
-    const groupsContacts = contacts.filter((contact) => contact.status === 'group');
-    const availableContacts = contacts.filter((contact) => contact.status !== 'offline' && contact.status !== 'group' && !contact.isFavorite);
-    const offlineContacts = contacts.filter((contact) => contact.status === 'offline');
+    const [favoritesContacts, setFavoritesContacts] = useState([]);
+    const [groupsContacts, setGroupsContacts] = useState([]);
+    const [availableContacts, setAvailableContacts] = useState([]);
+    const [offlineContacts, setOfflineContacts] = useState([]);
 
     useEffect(() => {
-        if (contacts.length == 1) {
-            getContacts()
+        setFavoritesContacts(contacts.filter((contact) => contact.isFavorite));
+        setGroupsContacts(contacts.filter((contact) => contact.status === 'group'));
+        setAvailableContacts(contacts.filter((contact) => contact.status !== 'offline' && contact.status !== 'group' && !contact.isFavorite));
+        setOfflineContacts(contacts.filter((contact) => contact.status === 'offline'));
+    }, [contacts]);
+
+    useEffect(() => {
+        if (contacts.length === 1) {
+            getContacts();
         }
-    }, [])
+    }, []);
 
     return (
         <div>

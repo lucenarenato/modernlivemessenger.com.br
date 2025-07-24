@@ -4,9 +4,11 @@ import ChangeSceneModal from './ChangeSceneModal';
 import ChangeNameAndBio from './ChangeNameAndBio';
 import { replaceEmoticons } from '../../helpers/replaceEmoticons';
 import { AuthContext } from '../../context/AuthContext';
+import { ChatContext } from '../../context/ChatContext';
 
 export default function Dropdown({ options, showStatusDots = false }) {
-    const { logout, user, changeStatus } = useContext(AuthContext);
+    const { user, changeStatus } = useContext(AuthContext);
+    const { logout } = useContext(ChatContext);
 
     const [changePictureShowModal, setShowChangePictureModal] = useState(false);
     const [showChangeNameAndBio, seShowChangeNameAndBio] = useState(false);

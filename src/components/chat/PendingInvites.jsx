@@ -28,7 +28,7 @@ export default function PendingInvites() {
 
     useEffect(() => {
         fetchPendingInvites()
-    }, []);
+    }, [pendingInvites]);
 
     const handleAccept = (id) => {
         setLoadingId(id);

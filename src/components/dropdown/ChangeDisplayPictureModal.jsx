@@ -1,8 +1,8 @@
 import React, { useState, useRef, useContext } from 'react';
 import '7.css/dist/7.scoped.css';
+import AvatarLarge from '../AvatarLarge';
 import usertiles from '../../imports/usertiles';
 import { AuthContext } from '../../context/AuthContext';
-import statusLarge from '../../imports/statusLarge';
 
 export default function ChangeDisplayPictureModal({ setShowChangePictureModal }) {
   const { user, changeAvatar } = useContext(AuthContext);
@@ -70,7 +70,7 @@ export default function ChangeDisplayPictureModal({ setShowChangePictureModal })
             </div>
           </div>
           <div className="window-body">
-            <div className="relative my-6 mx-auto">
+            <div className="relative my-6 mx-auto max-w-3xl">
               {/* Content */}
 
               <div className="relative flex flex-col w-full bg-white  bg-gradient-to-t from-[#c3d4ec83] via-white to-[#c3d4ec83]">
@@ -81,9 +81,9 @@ export default function ChangeDisplayPictureModal({ setShowChangePictureModal })
                   <p className="opacity-60">Choose how you want to appear in Messenger:</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center ml-2">
+                <div className="flex flex-col sm:flex-row items-center justify-center ml-2">
                   <div className="win7">
-                    <div className="flex flex-wrap gap-2.5 h-[255px] w-52 overflow-y-auto p-2.5 has-scrollbar mb-2">
+                    <div className="flex flex-wrap gap-2.5 h-[255px] w-72 overflow-y-auto p-2.5 has-scrollbar mb-2">
                       <div className="font-bold w-full mb-[-5px]">Regular pictures</div>
                       {Object.entries(usertiles).map(([name, src]) => (
                         <div key={name} onClick={() => updateUserPicture(name)} className="cursor-pointer">
@@ -95,22 +95,11 @@ export default function ChangeDisplayPictureModal({ setShowChangePictureModal })
 
                   <div className="flex flex-col items-center mx-4">
                     <div className="mb-5">
-                      <div className="h-28 w-28">
-                        <img
-                          className="absolute ml-[9px] mt-[8px] w-24 rounded-sm"
-                          src={user.avatar !== "default" ? usertiles[user.avatar] : "./assets/usertiles/default.png"}
-                          alt="Avatar"
-                        />
-
-                        <img
-                          className="absolute ml-[-10px] mt-[-7px]"
-                          src={statusLarge[user.status]}
-                          alt="Frame"
-                        />
-                      </div>
+                      <AvatarLarge image={userPicture} />
                     </div>
                     <div className="win7 flex flex-col w-32 gap-0.5">
                       <button disabled>Webcam picture...</button>
+                      <button disabled>Dynamic picture...</button>
                       <button disabled onClick={handleButtonClick}>Browse...</button>
                       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
                       <button onClick={removeUserPicture}>Remove</button>

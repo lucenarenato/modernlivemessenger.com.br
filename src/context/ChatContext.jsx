@@ -11,13 +11,12 @@ const SOCKET_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL;
 export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-    const { user, logout } = useContext(AuthContext)
+    const { user, setUser, setToken } = useContext(AuthContext)
     const { showToast } = useContext(ToastContext);
 
     const [contacts, setContacts] = useState([
         {
             "id": 0,
-            "ai": true,
             "bio": "I'm not simple, i'm a super AI",
             "isFavorite": true,
             "status": "online",
@@ -38,8 +37,28 @@ export const ChatProvider = ({ children }) => {
     useEffect(() => {
         if (user) {
             getContacts()
+            getMessages()
         }
     }, [user])
+
+
+    useEffect(() => {
+        if (localStorage.getItem("disconnect") === true) {
+            disconnectFromSocket()
+        }
+    }, [localStorage.getItem("disconnect")])
+
+    function logout() {
+        secureLocalStorage.removeItem('flm-user');
+        secureLocalStorage.removeItem('flm-token');
+        secureLocalStorage.removeItem('chatMessages');
+
+        setUser(null);
+        setToken(null);
+        disconnectFromSocket();
+
+        showToast(t("toast.logout"), "success");
+    }
 
     function fetchPendingInvites() {
         getPendingFriendshipsInvites()
@@ -60,7 +79,6 @@ export const ChatProvider = ({ children }) => {
                 if (response.status == 200) {
                     const aiContact = {
                         "id": 0,
-                        "ai": true,
                         "bio": "I'm not simple, i'm a super AI",
                         "isFavorite": true,
                         "status": "online",
@@ -93,7 +111,6 @@ export const ChatProvider = ({ children }) => {
         setSelectedContact(contacts.find(contact => contact.id === id))
         setShowIndividualChat(true);
     }
-
 
     function closeIndividualChat() {
         setShowIndividualChat(false);
@@ -131,14 +148,6 @@ export const ChatProvider = ({ children }) => {
             console.error(err);
             showToast("Erro ao enviar a mensagem.", "error");
         }
-    }
-
-
-    async function addMessageWithAI(chatId, message) {
-        setMessages(prev => ({
-            ...prev,
-            [chatId]: [...(prev[chatId] || []), message]
-        }));
     }
 
     function getMessagesByChat(chat_id) {
@@ -191,10 +200,11 @@ export const ChatProvider = ({ children }) => {
         socket.onmessage = (event) => {
             try {
                 const { type, payload } = JSON.parse(event.data);
+                console.log(event)
 
                 switch (type) {
                     case "message":
-                        receiveMessage(payload.chatId, payload.message);
+                        receiveMessage(payload.chatId, payload);
                         break;
                     case "friend_request":
                         receiveFriendRequest(payload);
@@ -203,9 +213,11 @@ export const ChatProvider = ({ children }) => {
                         receiveFriendResponse(payload);
                         break;
                     case "user_status_update":
+                        updateContactStatus(payload);
                     case "user_bio_update":
+                        updateContactBio(payload)
                     case "user_username_update":
-                        receiveUserUpdate(type, payload);
+                        updateContactUsername(payload)
                         break;
                     default:
                         console.warn("🌀 Evento WebSocket desconhecido:", type);
@@ -251,20 +263,27 @@ export const ChatProvider = ({ children }) => {
     function disconnectFromSocket() {
         if (connection) {
             connection.close();
+            console.log("🧨 WebSocket encerrado.");
             setConnection(null);
         }
         if (reconnectTimeout.current) {
             clearTimeout(reconnectTimeout.current);
             reconnectTimeout.current = null;
         }
-        console.log("🔌 WebSocket manually disconnected.");
     }
 
     // Adiciona nova mensagem recebida de outro usuário
     function receiveMessage(chatId, message) {
+        const newMessage = {
+            id: message.id,
+            chatId: chatId,
+            content: message.content,
+            drawAttention: message.drawAttention,
+            winks: message.winks
+        }
         setMessages(prev => ({
             ...prev,
-            [chatId]: [...(prev[chatId] || []), message],
+            [chatId]: [...(prev[chatId] || []), newMessage],
         }));
     }
 
@@ -280,13 +299,47 @@ export const ChatProvider = ({ children }) => {
         getContacts(); // Atualiza a lista de contatos
     }
 
-    // Atualiza status, bio ou username de um contato específico
-    function receiveUserUpdate(type, payload) {
-        const field = type.replace("user_", "").replace("_update", ""); // status, bio ou username
-        setContacts(prev =>
-            prev.map(contact =>
-                contact.id === payload.userId
-                    ? { ...contact, [field]: payload[field] }
+    // Atualiza status
+    function updateContactStatus(payload) {
+        console.log(payload.status)
+
+        var contacts2 = (prevContacts =>
+            prevContacts.map(contact =>
+                contact.id === payload.id
+                    ? { ...contact, status: payload.status }
+                    : contact
+            )
+        );
+
+        console.log(contacts)
+        console.log(contacts2)
+
+        setContacts(prevContacts =>
+            prevContacts.map(contact =>
+                contact.id === payload.id
+                    ? { ...contact, status: payload.status }
+                    : contact
+            )
+        );
+    }
+
+    // Atualiza bio
+    function updateContactBio(payload) {
+        setContacts(prevContacts =>
+            prevContacts.map(contact =>
+                contact.id === payload.id
+                    ? { ...contact, bio: payload.bio }
+                    : contact
+            )
+        );
+    }
+
+    // Atualiza username
+    function updateContactUsername(payload) {
+        setContacts(prevContacts =>
+            prevContacts.map(contact =>
+                contact.id === payload.id
+                    ? { ...contact, username: payload.username }
                     : contact
             )
         );
@@ -302,7 +355,6 @@ export const ChatProvider = ({ children }) => {
             fetchPendingInvites,
             messages,
             addMessage,
-            addMessageWithAI,
             getMessagesByChat,
             getMessages,
             selectedContact,
@@ -314,7 +366,8 @@ export const ChatProvider = ({ children }) => {
             getContacts,
             connectOnSocket,
             disconnectFromSocket,
-            connection
+            connection,
+            logout
         }}>
             {children}
         </ChatContext.Provider>

@@ -64,12 +64,16 @@ export const AuthProvider = ({ children }) => {
   }
 
   function logout() {
+    cleanupCallbacks.current.forEach(fn => fn?.());
+
     secureLocalStorage.removeItem('flm-user');
     secureLocalStorage.removeItem('flm-token');
     secureLocalStorage.removeItem('chatMessages');
 
     setUser(null);
     setToken(null);
+
+    localStorage.setItem("disconnect", true)
 
     showToast(t("toast.logout"), "success")
   }
@@ -153,7 +157,19 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, checkSession, changeStatus, changeUsername, changeBio, changeAvatar, changeBanner }}>
+    <AuthContext.Provider value={{
+      user,
+      setUser,
+      token,
+      setToken,
+      login,
+      checkSession,
+      changeStatus,
+      changeUsername,
+      changeBio,
+      changeAvatar,
+      changeBanner,
+    }}>
       {children}
     </AuthContext.Provider>
   );
