@@ -3,33 +3,35 @@ import '7.css/dist/7.scoped.css'
 
 import { sendFriendshipInviteWithEmail } from '../../data/friendships'
 import { ToastContext } from '../../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 export default function AddFriend({ isOpen, onClose }) {
     if (!isOpen) return null;
 
+    const { t } = useTranslation('toast');
+
     const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState('');
 
-    const { showToast } = useContext(ToastContext);
+    const { showCustomToast } = useContext(ToastContext);
 
     const onSubmit = () => {
         setIsLoading(true);
 
         sendFriendshipInviteWithEmail({ email })
             .then(response => {
-                console.log(response)
                 if (response.status === 201) {
-                    showToast("Pedido de amizade enviado com sucesso.", "success");
+                    showCustomToast(t("friendship.request-sent-title"), t("request-sent"));
                 } else if (response.status === 401 || response.status === 404) {
-                    showToast("E-mail inválido ou usuário não encontrado.", "error");
+                    showCustomToast(t("friendship.invalid-title"), t("friendship.invalid"));
                 } else if (response.status === 409) {
-                    showToast("Você já enviou esse pedido ou vocês já são amigos.", "error");
+                    showCustomToast(t("friendship.already-sent-title"), t("friendship.already-sent"));
                 } else {
-                    showToast("Algo ocorreu mal ao enviar o pedido.", "error");
+                    showCustomToast(t("friendship.error-title"), t("friendship.error"));
                 }
             })
             .catch(err => {
-                showToast("Ocorreu um erro ao enviar o pedido.", "error");
+                showCustomToast(t("friendship.error-title"), t("friendship.error"));
             })
             .finally(() => setIsLoading(false));
     };

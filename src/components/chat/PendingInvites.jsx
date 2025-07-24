@@ -9,8 +9,11 @@ import { ToastContext } from "../../context/ToastContext";
 import statusFrames from "../../imports/statusFrames";
 import usertiles from "../../imports/usertiles";
 import { ChatContext } from "../../context/ChatContext";
+import { useTranslation } from "react-i18next";
 
 export default function PendingInvites() {
+    const { t } = useTranslation('toast');
+
     const { getContacts } = useContext(ChatContext);
 
     const {
@@ -21,21 +24,21 @@ export default function PendingInvites() {
         fetchPendingInvites
     } = useContext(ChatContext);
 
-    const { showToast } = useContext(ToastContext);
+    const { showCustomToast } = useContext(ToastContext);
     const [showModal, setShowModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
 
 
     useEffect(() => {
         fetchPendingInvites()
-    }, []);
+    }, [pendingInvites]);
 
     const handleAccept = (id) => {
         setLoadingId(id);
         accpeptFriendshipInvite(id)
             .then((response) => {
                 if (response.status === 200 || response.status === 201) {
-                    showToast("Amizade aceita com sucesso.", "success");
+                    showCustomToast(t("friendship.accepted-title"), t("friendship.accepted-text"));
 
                     setPendingInvites((prev) => {
                         const updated = prev.filter((inv) => inv.id !== id);
@@ -45,11 +48,11 @@ export default function PendingInvites() {
 
                     getContacts();
                 } else {
-                    showToast("Houve um erro ao aceitar a amizade.", "error");
+                    showCustomToast(t("friendship.accepted-error-title"), t("friendship.accepted-error"));
                 }
             })
             .catch(() => {
-                showToast("Algo ocorreu mal, tente novamente mais tarde.", "error");
+                showCustomToast(t("friendship.generic-error-title"), t("friendship.generic-error"));
             })
             .finally(() => {
                 setLoadingId(null);
@@ -62,7 +65,7 @@ export default function PendingInvites() {
         rejectFriendshipInvite(id)
             .then((response) => {
                 if (response.status === 200 || response.status === 201) {
-                    showToast("Amizade recusada com sucesso.", "success");
+                    showCustomToast(t("friendship.rejected-title"), t("friendship.rejected"));
 
                     setPendingInvites((prev) => {
                         const updated = prev.filter((inv) => inv.id !== id);
@@ -71,11 +74,11 @@ export default function PendingInvites() {
                     });
 
                 } else {
-                    showToast("Houve um erro ao recusar a amizade.", "error");
+                    showCustomToast(t("friendship.rejected-error-title"), t("friendship.rejected-error"));
                 }
             })
             .catch(() => {
-                showToast("Algo ocorreu mal, tente novamente mais tarde.", "error");
+                showCustomToast(t("friendship.generic-error-title"), t("friendship.generic-error"));
             })
             .finally(() => {
                 setLoadingId(null);

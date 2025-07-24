@@ -1,23 +1,16 @@
 import "./Avatar.css";
 
 import React from "react";
-import { verifyAvatar } from "../utils/verifyAvatar";
-import { verifyBorder } from "../utils/verifyBorder";
 
 export default function Avatar({
-    avatar = "image",
     size = 64,
-    status = "default",
     top = 2,
     left = 4,
     minus = 15,
 }) {
-    const src = verifyAvatar(avatar);
-    const frame = verifyBorder(status);
 
-    // Calcula o tamanho baseado nas props
     let calculatedSize;
-    switch (String(size)) { // Convertendo para string para garantir a comparação
+    switch (String(size)) {
         case "32":
             calculatedSize = 70;
             break;
@@ -47,12 +40,12 @@ export default function Avatar({
             <div id="modal-border-avatar-div" style={avatarDivStyle}>
                 <img
                     id="modal-border-avatar-frame"
-                    src={frame}
+                    src="./assets/status/frame_64.png"
                     alt=""
                     style={avatarFrameStyle}
                 />
                 <div id="frame-div-avatar">
-                    <img id="modal-border-avatar-picture" src={src} alt="" />
+                    <img id="modal-border-avatar-picture" src="./assets/usertiles/default.png" alt="" />
                 </div>
             </div>
         </div>

@@ -1,42 +1,41 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import '7.css/dist/7.scoped.css';
+import { useTranslation } from 'react-i18next';
 
 import Footer from '../Footer';
-
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
 
 import EmoticonSelector from '../selectors/EmoticonSelector';
 import WinkSelector from '../selectors/WinkSelector';
 
 import EmoticonContext from '../../context/EmoticonContext';
 import { ChatContext } from '../../context/ChatContext';
-
-import Background from '../chat/Background';
-import AvatarLarge from '../AvatarLarge';
-
-import { replaceEmoticons } from '../../helpers/replaceEmoticons';
-import { getOpenAIResponse } from '../../utils/openai';
 import { useWindowManager } from '../../context/WindowManagerContext';
 import { AuthContext } from '../../context/AuthContext';
 
+import usertiles from '../../imports/usertiles';
+import statusLarge from '../../imports/statusLarge';
+import sounds from '../../imports/sounds';
+import scenes from '../../imports/scenes';
+
+import { replaceEmoticons } from '../../helpers/replaceEmoticons';
+import { getOpenAIResponse } from '../../data/openai';
+
+const apiKey = import.meta.env.VITE_OPEN_AI_API_KEY;
+
 export default function IndividualChat({ windowId = 'chat', close }) {
-    const { closeIndividualChat } = useContext(ChatContext);
     const { topWindowId, setTopWindowId } = useWindowManager();
+
+    const { t } = useTranslation("chat")
 
     const bringToFront = () => {
         setTopWindowId(windowId);
     };
 
-    useEffect(() => {
-        setTopWindowId(windowId);
-    }, [])
-
-
     const isTop = topWindowId === windowId;
     const zIndex = isTop ? 100 : 10;
 
     useEffect(() => {
+        bringToFront();
         const win = windowRef.current;
         if (!win) return;
 
@@ -121,12 +120,18 @@ export default function IndividualChat({ windowId = 'chat', close }) {
         };
     }, []);
 
+    const {
+        contacts,
+        messages,
+        selectedContact,
+        closeIndividualChat,
+        addMessageWithAI,
+        addMessage,
+        shaking,
+        setShaking } = useContext(ChatContext);
+
     const { user } = useContext(AuthContext);
-    const { contacts, selectedContact, messages, addMessage } = useContext(ChatContext);
 
-    const [contactMessages, setContactMessages] = useState(messages[selectedContact.chatId] || []);
-
-    const [shaking, setShaking] = useState(false);
     const [input, setInput] = useState('');
     const [lastMessageTime, setLastMessageTime] = useState(null);
     const [contactTyping, setContactTyping] = useState(false);
@@ -139,7 +144,6 @@ export default function IndividualChat({ windowId = 'chat', close }) {
         }
     }, [selectedEmoticon, setSelectedEmoticon]);
 
-
     const scrollToBottom = () => {
         const messageContainer = document.getElementById('message-container');
         if (messageContainer) {
@@ -149,8 +153,67 @@ export default function IndividualChat({ windowId = 'chat', close }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (input.trim() === '') return;
+        if (!input.trim()) return;
 
+        if (selectedContact.ai) {
+            messageWithAI()
+        } else {
+            messageWithUser()
+        }
+    };
+
+    function messageWithAI() {
+        const newUserMessage = {
+            id: Date.now(),
+            role: 'user',
+            chatId: selectedContact.chatId,
+            senderId: user.id,
+            content: input,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        addMessageWithAI(selectedContact.chatId, newUserMessage);
+
+        const newHist = [...messages[selectedContact?.chatId] || [], newUserMessage];
+        setInput('');
+        setContactTyping(true);
+        scrollToBottom();
+
+        // Pegando apenas as últimas 6 mensagens para o contexto
+        // Ignorando nudges e winks
+        const lastMessages = newHist
+            .filter(msg => !msg.drawAttention && !msg.winks)
+            .slice(-6)
+            .map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }));
+
+        // Chamando a IA apenas com as mensagens filtradas
+        getOpenAIResponse(lastMessages, apiKey).then(reply => {
+            setContactTyping(false);
+
+            const newAIMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                chatId: selectedContact.chatId,
+                senderId: selectedContact.id,
+                content: reply,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            addMessageWithAI(selectedContact.chatId, newAIMessage);
+            scrollToBottom();
+        }).catch(err => {
+            console.error('Error from AI:', err);
+            setContactTyping(false);
+        });
+    }
+
+
+    function messageWithUser() {
         const newMessage = {
             id: Date.now(),
             chatId: selectedContact.chatId,
@@ -166,38 +229,59 @@ export default function IndividualChat({ windowId = 'chat', close }) {
         setInput('');
 
         scrollToBottom();
+    }
+
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView();
+        }
+    }, [messages[selectedContact?.chatId]]);
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage.role === 'assistant') {
+                const currentDate = new Date();
+                const options = { year: '2-digit', month: '2-digit', day: '2-digit' };
+                const formattedDate = currentDate.toLocaleDateString([], options);
+                const formattedTime = currentDate.toLocaleTimeString([], {
+                    hour: '2-digit', minute: '2-digit',
+                });
+                setLastMessageTime(`${formattedTime} on ${formattedDate}`);
+            }
+        }
+    }, [messages]);
+
+    const simulateContactTyping = () => {
+        setContactTyping(true);
+        setTimeout(() => setContactTyping(false), 1500);
     };
 
-    // Getting the messages with this contatct
-    useEffect(() => {
-        if (selectedContact?.chatId) {
-            setContactMessages(messages[selectedContact.chatId] || []);
-        } else {
-            setContactMessages([]);
-        }
-    }, [messages, selectedContact]);
-
-    const nudgeMessage = 'Nudge.';
-
     const handleNudgeClick = () => {
-        const newMessages = [...messages, { role: 'user', content: nudgeMessage }];
+        const newMessage = {
+            id: Date.now(),
+            chatId: selectedContact.chatId,
+            senderId: user.id,
+            content: "Nudge",
+            drawAttention: true,
+            winks: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        if (selectedContact.ai) {
+            addMessageWithAI(selectedContact.chatId, newMessage)
+        } else {
+            addMessage(selectedContact.chatId, newMessage);
+        }
+
+        setShaking(true);
         const audio = new Audio(sounds.nudge);
         audio.play();
-        setShaking(true);
         setTimeout(() => {
             setShaking(false);
-            const newMessage = {
-                id: Date.now(),
-                chatId: selectedContact.chatId,
-                senderId: user.id,
-                content: nudgeMessage,
-                drawAttention: true,
-                winks: false,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-
-            addMessage(selectedContact.chatId, newMessage);
         }, 500);
     };
 
@@ -205,7 +289,7 @@ export default function IndividualChat({ windowId = 'chat', close }) {
         <div
 
             ref={containerRef}
-            className={`"p-1 md:p-5" ${shaking ? 'nudge' : ''}`}
+            className="p-1 md:p-5"
             style={{
                 position: 'absolute',
                 top: '50%',
@@ -213,8 +297,7 @@ export default function IndividualChat({ windowId = 'chat', close }) {
                 transform: 'translate(-50%, -50%)',
                 width: '100%',
                 maxWidth: '850px',
-                maxHeight: '100px',
-                zIndex,
+                zIndex: zIndex,
                 cursor: 'default',
             }}
         >
@@ -230,13 +313,12 @@ export default function IndividualChat({ windowId = 'chat', close }) {
                     transform: 'translate(-50%, -50%)',
                     width: '100%',
                     maxWidth: '800px',
-                    maxHeight: '500px',
                     cursor: 'default',
                 }}
             >
 
 
-                <div data-scope="chat" className="window active">
+                <div data-scope="chat" className={`window active ${shaking ? 'nudge' : ''}`} >
                     <div className="title-bar">
                         <div className="title-bar-text flex items-center gap-2">
                             <img src="./wlm-logo.png" alt="MSN Icon" className="w-5 h-5" />
@@ -248,18 +330,18 @@ export default function IndividualChat({ windowId = 'chat', close }) {
                     </div>
                     <div className="window-body">
                         <div
-                            className={`bg-no-repeat bg-[length:100%_100px] max-h-96 ${shaking ? 'nudge' : ''}`}
+                            className={`bg-no-repeat bg-[length:100%_100px]  ${shaking ? 'nudge' : ''}`}
                             style={{ backgroundImage: 'url(/assets/background/background.jpg)' }}
                         >
                             <div className="flex flex-col w-full font-sans text-base h-full">
                                 <div className="flex items-center w-full h-[31.4px] bg-white p-2 gap-2">
                                     <img src="/assets/chat/contact_chat_icon.png" alt="" />
-                                    <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
+                                    <p className="flex gap-1 items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
                                     <p>&lt;{selectedContact.email}&gt;</p>
                                 </div>
                                 <div
                                     className="flex items-center justify-between h-[31.4px] bg-no-repeat shadow-lg"
-                                    style={{ backgroundImage: `'url(/assets/background/chat_navbar_background.png)'` }}
+                                    style={{ backgroundImage: 'url(/assets/background/chat_navbar_background.png)' }}
                                 >
                                     <div className="flex gap-1 items-center aerobutton p-2 h-6">
                                         <div className="w-5">
@@ -271,129 +353,219 @@ export default function IndividualChat({ windowId = 'chat', close }) {
                                     </div>
                                 </div>
 
-                                <Background>
-                                    <div className="px-4 pt-4 grid grid-cols-[170px__1fr] h-full">
-                                        <div className="h-full flex flex-col items-center justify-between">
-                                            <AvatarLarge image={selectedContact.avatar} status={selectedContact.status} />
-                                            <div>
-                                                <AvatarLarge image={user.avatar} />
-                                                <div className="h-10" />
+                                <div className="flex flex-col overflow-hidden relative">
+
+                                    {/* Contact Background */}
+                                    <div
+                                        className={`bg-no-repeat absolute top-0 left-0 w-full z-0`}
+                                        style={{
+                                            height: '80px',
+                                            backgroundImage: `url(${selectedContact.banner == "default" ? "/assets/scenes/default_background.jpg" : scenes[selectedContact.banner]})`,
+                                            backgroundSize: scenes[selectedContact.banner] !== './assets/scenes/default_background.jpg' ? 'cover' : '',
+                                            backgroundPosition: scenes[selectedContact.banner] !== './assets/scenes/default_background.jpg' ? 'center' : '',
+                                        }}
+                                    />
+
+                                    {/* Contact Info Header (Small screens) */}
+                                    <div className="sm:hidden p-3 flex items-center gap-1 flex-shrink-0">
+
+                                        {/* Avatar */}
+                                        <div className="relative h-14 w-14">
+                                            <img
+                                                className="absolute top-[5px] left-[6px] w-[43px] h-[44px] rounded-sm"
+                                                src={selectedContact.avatar !== "default" ? usertiles[selectedContact.avatar] : "./assets/usertiles/default.png"}
+                                                alt="Avatar"
+                                            />
+                                            <img
+                                                className="absolute top-0 left-0 w-14 h-14"
+                                                src={statusLarge[selectedContact.status]}
+                                                alt="Frame"
+                                            />
+                                        </div>
+
+                                        {/* Username and bio */}
+                                        <div className="text-black mb-1">
+                                            <p className="font-bold opacity-90 flex items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
+                                            <p className="text-xs opacity-90 flex items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.bio) }} />
+                                        </div>
+                                    </div>
+
+                                    {/* Contact Info Header (Large screens) */}
+                                    <div className="hidden sm:block flex items-center h-20 p-3 flex-shrink-0">
+                                        <div className="ml-[140px] mt-1 text-black h-full">
+                                            <p className="font-bold opacity-90 flex items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
+                                            <p className="text-xs opacity-90 flex items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.bio) }} />
+                                        </div>
+                                    </div>
+
+
+                                    <div className="flex flex-1 overflow-hidden bg-white">
+
+                                        {/* Left Column - Large screens only */}
+                                        <div className="hidden sm:flex sm:flex-col justify-between absolute top-[95px] bottom-[0px] w-40 pl-4 pr-2 pb-5">
+
+                                            {/* Contact Photo - Top */}
+                                            <div className="-mt-20 z-20 rounded">
+                                                <div className="relative h-24 mb-2 w-full">
+                                                    <img
+                                                        className="absolute top-[12px] left-[12px] w-[88px] h-[89px] rounded-sm"
+                                                        src={selectedContact.avatar !== "default" ? usertiles[selectedContact.avatar] : "./assets/usertiles/default.png"}
+                                                        alt="Avatar"
+                                                    />
+                                                    <img className="absolute top-0 left-0 w-[115px] h-[115px]" src={statusLarge[selectedContact.status]} alt="Frame" />
+                                                </div>
+                                            </div>
+
+                                            {/* User's Photo - Bottom */}
+                                            <div className="bottom-0 flex justify-center">
+                                                <div className="relative h-24 mb-2 w-full">
+                                                    <img
+                                                        className="absolute top-[12px] left-[12px] w-[88px] h-[89px] rounded-sm"
+                                                        src={user.avatar !== "default" ? usertiles[user.avatar] : "./assets/usertiles/default.png"}
+                                                        alt="Avatar"
+                                                    />
+                                                    <img className="absolute top-0 left-0 w-[115px] h-[115px]" src={statusLarge[user.status]} alt="Frame" />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="win7">
-                                            <div className="flex items-center white-light mb-10">
-                                                <p className="flex items-center gap-1 text-lg" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
-                                                <p className="ml-1 capitalize">({selectedContact.status})</p>
-                                            </div>
-                                            <img src="/assets/general/divider.png" alt="" className="mb-[-5px] pointer-events-none" />
 
-                                            <div className="flex flex-col justify-between h-full w-full my-4 text-sm pr-2">
-                                                <div id="message-container" className="overflow-y-auto break-all has-scrollbar">
-                                                    {contactMessages.map((message, index) => {
-                                                        const prev = contactMessages[index - 1];
+                                        {/* Right Column */}
+                                        <div className="flex-1 flex flex-col sm:ml-[130px] mt">
+
+                                            {/* Messages */}
+                                            <div className="flex-1 bg-white p-3 overflow-y-auto hide-scrollbar mt-2">
+                                                <div className="text-xs text-gray-600 mb-2">
+                                                    <span className="text-red-500">✕</span> {t("alert")}
+                                                </div>
+
+                                                {/* Map */}
+                                                <div className="space-y-2 bottom-0 min-h-52 max-h-52 message-container">
+                                                    {(messages[selectedContact?.chatId] || []).map((message, index, arr) => {
+                                                        const prev = arr[index - 1];
                                                         const isUserMessage = message.senderId === user.id;
+                                                        const isPrevSameSender = prev && prev.senderId === message.senderId;
 
                                                         return (
                                                             <div key={message.id} className={`message ${isUserMessage ? 'user' : 'contact'}`}>
-                                                                {message.content === nudgeMessage ? (
+                                                                {isUserMessage ? (
                                                                     <div>
-                                                                        {prev && prev.content === nudgeMessage ? (
-                                                                            <>
-                                                                                <p className="ml-1">{nudgeMessage}</p>
-                                                                                <p>━━━━</p>
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <p>━━━━</p>
-                                                                                <p className="ml-1">{nudgeMessage}</p>
-                                                                                <p>━━━━</p>
-                                                                            </>
+                                                                        {!isPrevSameSender && (
+                                                                            <div className="flex text-black text-opacity-70">
+                                                                                <p className="flex items-center gap-1" dangerouslySetInnerHTML={{
+                                                                                    __html: replaceEmoticons(
+                                                                                        isUserMessage ? (user.username || user.email) : selectedContact.username
+                                                                                    )
+                                                                                }} />
+                                                                                <p className="ml-1">{t("says")}</p>
+                                                                            </div>
                                                                         )}
-                                                                    </div>
-                                                                ) : isUserMessage ? (
-                                                                    <div>
-                                                                        <div className="flex text-black text-opacity-70">
-                                                                            <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(user.username || user.email) }} />
-                                                                            <p className="ml-1">says:</p>
-                                                                        </div>
-                                                                        <div className="flex gap-2 items-start ml-1">
-                                                                            <div className="flex-shrink-0 mt-2.5">
+                                                                        <div className="flex gap-2 items-center ml-1">
+                                                                            <div className="flex-shrink-0">
                                                                                 <img src="/assets/chat/message_dot.png" alt="Message Dot" />
                                                                             </div>
-                                                                            <div>
-                                                                                <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(message.content) }} />
-                                                                            </div>
+                                                                            {message.drawAttention === true ? (
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1 ">{t('nudge.me')}</p>
+                                                                                </div>
+                                                                            ) : message.winks === true ? (
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1">{t('winks.me')}</p>
+                                                                                </div>
+                                                                            ) :
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(message.content) }} />
+                                                                                </div>
+                                                                            }
                                                                         </div>
                                                                     </div>
                                                                 ) : (
                                                                     <div>
-                                                                        <div className="flex text-black text-opacity-70">
-                                                                            <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
-                                                                            <p className="ml-1">says:</p>
-                                                                        </div>
+                                                                        {!isPrevSameSender && (
+                                                                            <div className="flex text-black text-opacity-70">
+                                                                                <p className="flex items-center gap-1" dangerouslySetInnerHTML={{
+                                                                                    __html: replaceEmoticons(
+                                                                                        isUserMessage ? (user.username || user.email) : selectedContact.username
+                                                                                    )
+                                                                                }} />
+                                                                                <p className="ml-1">{t("says")}</p>
+                                                                            </div>
+                                                                        )}
                                                                         <div className="flex gap-2 items-start ml-1">
                                                                             <div className="flex-shrink-0 mt-2.5">
                                                                                 <img src="/assets/chat/message_dot.png" alt="Message Dot" />
                                                                             </div>
-                                                                            <div>
-                                                                                <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(message.content) }} />
-                                                                            </div>
+                                                                            {message.drawAttention === true ? (
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1">{t('nudge.contact')}</p>
+                                                                                </div>
+                                                                            ) : message.winks === true ? (
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1">{t('winks.contact')}</p>
+                                                                                </div>
+                                                                            ) :
+                                                                                <div>
+                                                                                    <p className="flex items-center gap-1" dangerouslySetInnerHTML={{ __html: replaceEmoticons(message.content) }} />
+                                                                                </div>
+                                                                            }
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         );
                                                     })}
+                                                    <div ref={messagesEndRef} />
                                                 </div>
-                                                <div className="w-full">
-                                                    {contactTyping && (
-                                                        <div className="flex gap-1">
-                                                            <p className="flex" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
-                                                            <p>is typing...</p>
-                                                        </div>
-                                                    )}
-                                                    {lastMessageTime && <p className="opacity-50 my-1">Last message received at {lastMessageTime}</p>}
-                                                    <img src="/assets/general/divider.png" alt="" className="pointer-events-none" />
-                                                    <form onSubmit={handleSubmit}>
-                                                        <input
-                                                            type="text"
-                                                            value={input}
-                                                            onChange={(e) => setInput(e.target.value)}
-                                                            className="w-full border rounded-t-[4px] outline-none p-1 border-[#bdd5df]"
-                                                        />
-                                                    </form>
-                                                    <div>
-                                                        <img className="absolute bottom-[68px] left-[173.6px]" src="/assets/background/chat_background_point.png" alt="" />
+                                            </div>
+
+                                            {/* Input */}
+                                            <div className="px-2 py-1 w-full flex-shrink-0">
+                                                {contactTyping && (
+                                                    <div className="flex gap-1 items-center">
+                                                        <p className="flex items-center" dangerouslySetInnerHTML={{ __html: replaceEmoticons(selectedContact.username) }} />
+                                                        <p>is typing...</p>
                                                     </div>
-                                                    <div className="flex border-x border-b rounded-b-[4px] border-[#bdd5df]" style={{ backgroundImage: 'url(/assets/background/chat_icons_background.png)' }}>
-                                                        <EmoticonSelector />
-                                                        <WinkSelector />
-                                                        <div className="flex items-center aerobutton p-1 h-6" onClick={handleNudgeClick}>
-                                                            <img src="/assets/chat/send_nudge.png" alt="" />
-                                                        </div>
-                                                        <div className="px-2">
-                                                            <img src="/assets/background/chat_icons_separator.png" alt="" />
-                                                        </div>
-                                                        <div className="flex items-center aerobutton p-1 h-6">
-                                                            <img src="/assets/chat/change_font.png" alt="" />
-                                                        </div>
-                                                        <div className="flex items-center aerobutton p-1 h-6">
-                                                            <img src="/assets/chat/select_background.png" alt="" />
-                                                            <img src="/assets/general/arrow.png" alt="" />
-                                                        </div>
+                                                )}
+                                                {lastMessageTime && <p className="opacity-50 my-1">Last message received at {lastMessageTime}</p>}
+                                                <img src="/assets/general/divider.png" alt="" className="pointer-events-none" />
+                                                <form onSubmit={handleSubmit}>
+                                                    <input
+                                                        type="text"
+                                                        value={input}
+                                                        onChange={(e) => setInput(e.target.value)}
+                                                        className="w-full border rounded-t-[4px] outline-none p-1 border-[#bdd5df]"
+                                                    />
+                                                </form>
+
+                                                <div className="flex border-x border-b rounded-b-[4px] border-[#bdd5df]" style={{ backgroundImage: 'url(/assets/background/chat_icons_background.png)' }}>
+                                                    <EmoticonSelector />
+                                                    <WinkSelector chatId={selectedContact.chatId} />
+                                                    <div className="flex items-center aerobutton p-1 h-6" onClick={handleNudgeClick}>
+                                                        <img src="/assets/chat/send_nudge.png" alt="" />
                                                     </div>
-                                                    <div className="h-[121px]" />
+                                                    <div className="px-2">
+                                                        <img src="/assets/background/chat_icons_separator.png" alt="" />
+                                                    </div>
+                                                    <div className="flex items-center aerobutton p-1 h-6">
+                                                        <img src="/assets/chat/change_font.png" alt="" />
+                                                    </div>
+                                                    <div className="flex items-center aerobutton p-1 h-6">
+                                                        <img src="/assets/chat/select_background.png" alt="" />
+                                                        <img src="/assets/general/arrow.png" alt="" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </Background>
+
+                                </div>
+
+
                             </div>
                         </div>
                         <Footer />
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

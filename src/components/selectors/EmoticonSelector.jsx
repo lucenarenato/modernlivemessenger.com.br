@@ -1,9 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import pinnedEmoticons from '../../imports/pinnedEmoticons';
 import EmoticonContext from '../../context/EmoticonContext';
 
 const EmoticonSelector = () => {
+  const { t } = useTranslation("chat")
+
   const [isOpen, setIsOpen] = useState(false);
   const [recentEmoticons, setRecentEmoticons] = useState([]);
   const { setSelectedEmoticon } = useContext(EmoticonContext);
@@ -67,11 +70,11 @@ const EmoticonSelector = () => {
         {isOpen && (
           <div className="absolute w-[384px] h-auto bottom-[19px] left-[-9px] m-2 bg-white border border-gray-300 p-1">
             <div className="w-full border-b pb-1 flex justify-between">
-              <p className="font-bold">Your emoticons</p>
-              <p className="link">Show all...</p>
+              <p className="font-bold">{t("emoticons.title")}</p>
+              <p className="link">{t("emoticons.all")}</p>
             </div>
             <div>
-              <p className="my-1 opacity-75">Recently used emoticons</p>
+              <p className="my-1 opacity-75">{t("emoticons.recently")}</p>
               <div className="w-full border-b flex justify-center gap-1.5 pb-0.5">
                 {displayRecentEmoticons.map((alias, index) => (
                   <div
@@ -83,7 +86,7 @@ const EmoticonSelector = () => {
                   </div>
                 ))}
               </div>
-              <p className="my-1 opacity-75">Pinned emoticons</p>
+              <p className="my-1 opacity-75">{t("emoticons.pinned")}</p>
             </div>
             <div className="flex flex-wrap gap-1 mb-2">
               {Array.from(uniqueEmoticonMap.entries()).map(([src, alias]) => (

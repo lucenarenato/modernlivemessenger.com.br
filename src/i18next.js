@@ -18,7 +18,8 @@ i18n
       '404',
       'auth',
       'chat',
-      'footer'
+      'footer',
+      'toast'
     ],
     defaultNS: '404',
     backend: {

@@ -7,11 +7,14 @@ import Contacts from './Contacts';
 import AddFriend from '../modal/AddFriend';
 import PendingInvites from './PendingInvites';
 import { AuthContext } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 import scenes from '../../imports/scenes';
 
 export default function Chat() {
     const { user } = useContext(AuthContext);
+    const { t } = useTranslation("chat")
+
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
 
     const [banner, setBanner] = useState(user.banner)
@@ -54,7 +57,7 @@ export default function Chat() {
 
                         {/* Searchbar and icons */}
                         <div className="flex items-center mt-3 px-4">
-                            <SearchBar initialValue="Search contacts or the web..." />
+                            <SearchBar initialValue={t('search')} />
 
                             <div onClick={() => setShowAddFriendModal(true)} className="flex cursor-pointer gap-1 items-center aerobutton p-1 ml-1 h-6">
                                 <div className="w-5">

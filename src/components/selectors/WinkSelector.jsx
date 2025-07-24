@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { winks, winks_icons } from '../../imports/winks';
-import Ruffle from '../../helpers/ruffle'; // Import ruffle
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const WinkSelector = () => {
+import { winks, winks_icons } from '../../imports/winks';
+import { ChatContext } from '../../context/ChatContext';
+
+const WinkSelector = ({ chatId }) => {
+  const { t } = useTranslation("chat")
+  const { sendWink } = useContext(ChatContext);
+
   const [isOpen, setIsOpen] = useState(false);
   const [recentWinks, setRecentWinks] = useState([]);
   const dropdownRef = useRef(null);
-  const ruffleRef = useRef(null); // Reference for ruffle component
 
   useEffect(() => {
     const savedWinks = JSON.parse(localStorage.getItem('recentWinks'));
@@ -39,10 +43,7 @@ const WinkSelector = () => {
       return updatedRecentWinks.slice(0, 11);
     });
 
-    const wink = winks[alias];
-    if (ruffleRef.current && wink) {
-      ruffleRef.current.play(wink.path, wink.duration);
-    }
+    sendWink(alias, chatId)
   };
 
   // Ensure there are 11 slots for recently used winks
@@ -65,11 +66,11 @@ const WinkSelector = () => {
         {isOpen && (
           <div className="absolute w-[384px] h-auto bottom-[19px] left-[-9px] m-2 bg-white border border-gray-300 p-1">
             <div className="w-full border-b pb-1 flex justify-between">
-              <p className="font-bold">Your winks</p>
-              <p className="link">Show all...</p>
+              <p className="font-bold">{t("winks.title")}</p>
+              <p className="link">{t("winks.all")}</p>
             </div>
             <div>
-              <p className="my-1 opacity-75">Recently used winks</p>
+              <p className="my-1 opacity-75">{t("winks.recently")}</p>
               <div className="w-full border-b flex justify-center gap-1.5 pb-0.5">
                 {displayRecentWinks.map((alias, index) => (
                   <div
@@ -81,7 +82,7 @@ const WinkSelector = () => {
                   </div>
                 ))}
               </div>
-              <p className="my-1 opacity-75">Pinned winks</p>
+              <p className="my-1 opacity-75">{t("winks.pinned")}</p>
             </div>
             <div className="flex flex-wrap gap-1 mb-2">
               {Object.keys(winks).map((alias) => (
@@ -99,7 +100,6 @@ const WinkSelector = () => {
           </div>
         )}
       </div>
-      <Ruffle ref={ruffleRef} />
     </>
   );
 };
