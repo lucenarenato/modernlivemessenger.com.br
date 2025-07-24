@@ -1,5 +1,5 @@
 {
-    "error": "erro",
-    "title": "Algo deu errado.",
-    "button": "Tentar novamente"
+    "error": "error",
+    "title": "Algo salió mal.",
+    "button": "Intentar otra vez"
 }

@@ -2,10 +2,12 @@ import React, { useContext, useEffect, useState } from 'react';
 
 import { replaceEmoticons } from '../../helpers/replaceEmoticons';
 import { ChatContext } from '../../context/ChatContext';
+import { useTranslation } from 'react-i18next';
 
 
 export default function Contacts() {
     const { contacts, getContacts } = useContext(ChatContext);
+    const { t } = useTranslation("chat")
 
     const [favoritesContacts, setFavoritesContacts] = useState([]);
     const [groupsContacts, setGroupsContacts] = useState([]);
@@ -28,9 +30,9 @@ export default function Contacts() {
     return (
         <div>
             <ContactCategory title="Favorites" contacts={favoritesContacts} count={favoritesContacts.length} />
-            <ContactCategory title="Groups" contacts={groupsContacts} count={groupsContacts.length} />
-            <ContactCategory title="Available" contacts={availableContacts} count={availableContacts.length} />
-            <ContactCategory title="Offline" contacts={offlineContacts} count={offlineContacts.length} />
+            <ContactCategory title={t('contacts.groups')} contacts={groupsContacts} count={groupsContacts.length} />
+            <ContactCategory title={t('contacts.available')} contacts={availableContacts} count={availableContacts.length} />
+            <ContactCategory title={t('contacts.offline')} contacts={offlineContacts} count={offlineContacts.length} />
         </div>
     )
 }
@@ -38,6 +40,7 @@ export default function Contacts() {
 
 const ContactCategory = ({ title, contacts, count }) => {
     const [isOpen, setIsOpen] = useState(true);
+    const { t } = useTranslation("chat")
 
     const toggleAccordion = () => {
         setIsOpen(!isOpen);
@@ -56,7 +59,7 @@ const ContactCategory = ({ title, contacts, count }) => {
                 {title === 'Favorites' && (
                     <img src="/assets/general/favorites.png" className="mr-1" alt="favorites icon" />
                 )}
-                <p className="text-[#1D2F7F] mr-1">{title}</p>
+                <p className="text-[#1D2F7F] mr-1">{title === "Favorites" ? t('contacts.favorites') : title}</p>
                 <p className="opacity-40">({count})</p>
             </div>
             {isOpen && <ContactList contacts={contacts} />}

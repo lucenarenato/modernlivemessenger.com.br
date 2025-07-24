@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 //import '7.css/dist/7.scoped.css';
 import '7.css/dist/7.css';
 
@@ -117,7 +117,7 @@ export default function Window({ windowId = 'main', closeChat, minimizeChat }) {
                 width: '100%',
                 maxWidth: '500px',
                 maxHeight: '700px',
-                zIndex,
+                zIndex: user ? zIndex : 0,
                 cursor: 'default',
             }}
         >

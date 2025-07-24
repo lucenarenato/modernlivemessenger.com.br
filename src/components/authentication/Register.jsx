@@ -11,7 +11,7 @@ export default function Register({ showLoginComponent }) {
     const { t } = useTranslation("auth");
 
     const [isLoading, setIsLoading] = useState(false);
-    const { showToast } = useContext(ToastContext);
+    const { showCustomToast } = useContext(ToastContext);
 
     const {
         register,
@@ -46,21 +46,21 @@ export default function Register({ showLoginComponent }) {
             .then(response => {
                 if (response.status == 201) {
                     setIsLoading(false);
-                    showToast("Conta criada com sucesso.", "success");
+                    showCustomToast("Register", t('register.success'));
+                    showLoginComponent()
                     return
                 }
                 if (response.status == 409) {
-                    showToast("Já existe um usuário cadastrado com esse e-mail.", "error");
+                    showCustomToast("Register", t('register.invalid'));
                     setIsLoading(false);
                 }
                 else {
-                    showToast("Algo ocorreu mal ao criar uma conta.", "error");
+                    showCustomToast("Register", t('register.error'));
                     setIsLoading(false);
                 }
             })
             .catch(err => {
-                console.log(err)
-                showToast("An error occurred during the proccess.", "error");
+                showCustomToast("Register", t('register.error'));
                 setIsLoading(false);
             });
 

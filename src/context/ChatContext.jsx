@@ -1,22 +1,30 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
-
 import secureLocalStorage from 'react-secure-storage';
+
+import sounds from '../imports/sounds';
+
 import { AuthContext } from './AuthContext';
-import { getFriendships, getPendingFriendshipsInvites } from '../data/friendships';
 import { ToastContext } from './ToastContext';
+
+import { getFriendships, getPendingFriendshipsInvites } from '../data/friendships';
 import { getAllMessages, getMessagesByChat, sendMessage } from '../data/messages';
+import { winks } from '../imports/winks';
+import { useTranslation } from 'react-i18next';
 
 const SOCKET_BASE_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
 export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-    const { user, setUser, setToken } = useContext(AuthContext)
-    const { showToast } = useContext(ToastContext);
+    const { user, logout } = useContext(AuthContext)
+    const { showCustomToast } = useContext(ToastContext);
+    const { t } = useTranslation("toast")
+
 
     const [contacts, setContacts] = useState([
         {
             "id": 0,
+            "ai": true,
             "bio": "I'm not simple, i'm a super AI",
             "isFavorite": true,
             "status": "online",
@@ -27,12 +35,24 @@ export const ChatProvider = ({ children }) => {
             "chatId": 0
         }
     ]);
-    const [selectedContact, setSelectedContact] = useState();
+    const [selectedContact, setSelectedContact] = useState(null);
     const [pendingInvites, setPendingInvites] = useState([]);
     const [loadingId, setLoadingId] = useState(null);
 
     const [showIndividualChat, setShowIndividualChat] = useState(false);
     const [showChatWithAI, setShowChatWithAI] = useState(false);
+
+    const contactsRef = useRef(contacts);
+
+    const selectedContactRef = useRef(selectedContact);
+
+    useEffect(() => {
+        contactsRef.current = contacts;
+    }, [contacts]);
+
+    useEffect(() => {
+        selectedContactRef.current = selectedContact;
+    }, [selectedContact]);
 
     useEffect(() => {
         if (user) {
@@ -41,23 +61,9 @@ export const ChatProvider = ({ children }) => {
         }
     }, [user])
 
-
-    useEffect(() => {
-        if (localStorage.getItem("disconnect") === true) {
-            disconnectFromSocket()
-        }
-    }, [localStorage.getItem("disconnect")])
-
-    function logout() {
-        secureLocalStorage.removeItem('flm-user');
-        secureLocalStorage.removeItem('flm-token');
-        secureLocalStorage.removeItem('chatMessages');
-
-        setUser(null);
-        setToken(null);
+    function logoutChat() {
         disconnectFromSocket();
-
-        showToast(t("toast.logout"), "success");
+        logout(true);
     }
 
     function fetchPendingInvites() {
@@ -69,7 +75,7 @@ export const ChatProvider = ({ children }) => {
             })
             .catch((err) => {
                 console.error(err);
-                showToast("Não foi possível buscar pedidos pendentes.", "error");
+                showCustomToast("Error", t('error.pending-invites'))
             });
     }
 
@@ -79,6 +85,7 @@ export const ChatProvider = ({ children }) => {
                 if (response.status == 200) {
                     const aiContact = {
                         "id": 0,
+                        "ai": true,
                         "bio": "I'm not simple, i'm a super AI",
                         "isFavorite": true,
                         "status": "online",
@@ -88,31 +95,33 @@ export const ChatProvider = ({ children }) => {
                         "email": "ai@ficticial.com",
                         "chatId": 0
                     };
-
                     const updatedContacts = [aiContact, ...response.data];
                     setContacts(updatedContacts);
                     return
                 }
                 if (response.status == 401 && response.statusText == "Unauthorized" && response.data.message === "Token inválido ou expirado") {
-                    showToast("Sua sessão expirou, faça o login novamente.", "error");
+                    showCustomToast("Error", t("error.session-expired"));
                     logout()
                 }
                 else {
-                    showToast("Algo ocorreu mal ao buscar seus amigos.", "error");
+                    showCustomToast("Error", t("error.friendships"));
                 }
             })
             .catch(err => {
                 (err)
-                showToast("An error occurred getting your friendships.", "error");
+                showCustomToast("Error", t("error.friendships"));
             });
     }
 
     function selectContact(id) {
-        setSelectedContact(contacts.find(contact => contact.id === id))
+        const contact = contactsRef.current.find(c => c.id === id);
+        setSelectedContact(contact);
+        selectedContactRef.current = contact;
         setShowIndividualChat(true);
     }
 
     function closeIndividualChat() {
+        setSelectedContact(null);
         setShowIndividualChat(false);
     }
 
@@ -142,12 +151,23 @@ export const ChatProvider = ({ children }) => {
                     [chatId]: [...(prev[chatId] || []), newMessage]
                 }));
             } else {
-                showToast("Algo ocorreu mal ao enviar a nova mensagem.", "error");
+                showCustomToast("Error", t("error.message"));
             }
         } catch (err) {
             console.error(err);
-            showToast("Erro ao enviar a mensagem.", "error");
+            showCustomToast("Error", t("error.message"));
         }
+    }
+
+
+    async function addMessageWithAI(chatId, message) {
+        setMessages(prev => {
+            const updated = {
+                ...prev,
+                [chatId]: [...(prev[chatId] || []), message]
+            };
+            return updated;
+        });
     }
 
     function getMessagesByChat(chat_id) {
@@ -169,11 +189,11 @@ export const ChatProvider = ({ children }) => {
                 }
 
             } else {
-                showToast("Erro ao buscar mensagens", "error");
+                showCustomToast("Error", t('error.messages'));
             }
         } catch (err) {
             console.error(err);
-            showToast("Erro ao buscar mensagens", "error");
+            showCustomToast("Error", t('error.messages'));
         }
     }
 
@@ -214,8 +234,10 @@ export const ChatProvider = ({ children }) => {
                         break;
                     case "user_status_update":
                         updateContactStatus(payload);
+                        break;
                     case "user_bio_update":
                         updateContactBio(payload)
+                        break;
                     case "user_username_update":
                         updateContactUsername(payload)
                         break;
@@ -272,55 +294,183 @@ export const ChatProvider = ({ children }) => {
         }
     }
 
+    const [shaking, setShaking] = useState(false);
+    const ruffleRef = useRef(null);
+
+    function showWink(alias) {
+        const wink = winks[alias];
+        if (ruffleRef.current && wink) {
+            ruffleRef.current.play(wink.path, wink.duration);
+        }
+    }
+
+    function sendWink(alias, chatId) {
+        const wink = winks[alias];
+        if (ruffleRef.current && wink) {
+            ruffleRef.current.play(wink.path, wink.duration);
+        }
+
+        const newMessage = {
+            senderId: user.id,
+            content: alias,
+            drawAttention: false,
+            winks: true,
+        };
+
+        if (!selectContact.ai) {
+            addMessage(chatId, newMessage)
+        } else {
+            addMessageWithAI(chatId, newMessage)
+        }
+    }
+
+    function receiveNudge(message) {
+        if (selectedContactRef.current?.id === message.senderId) {
+            setShaking(true);
+            const audio = new Audio(sounds.nudge);
+            audio.play();
+            setTimeout(() => {
+                setShaking(false);
+            }, 500);
+        } else {
+            const sender = contactsRef.current.find(c => c.id == message.senderId)
+            showCustomToast(
+                t('nudge.title'),                        // title
+                t('nudge.text'),                         // text
+                true,                                    // nudge
+                sender?.avatar,                          // avatar
+                sender?.id,                              // id
+                false,                                   // wink
+                false,                                   // isMessage
+                () => { },                               // onWink
+                () => selectContact(sender?.id),         // onOpenChat
+                t('nudge.open')                          // translation
+            )
+        }
+    };
+
+    function receiveWink(message) {
+        if (selectedContactRef.current?.id === message.senderId) {
+            const wink = winks[message.content];
+            if (ruffleRef.current && wink) {
+                ruffleRef.current.play(wink.path, wink.duration);
+            }
+        } else {
+            const sender = contactsRef.current.find(c => c.id == message.senderId)
+            showCustomToast(
+                t('wink.title'),                         // title
+                t('wink..text'),                         // text
+                false,                                   // nudge
+                sender?.avatar,                          // avatar
+                sender?.id,                              // id
+                message.content,                         // wink
+                false,                                   // isMessage
+                () => showWink(message.content),         // onWink
+                () => { },                               // onOpenChat
+                t('wink.open')                           // translation
+            )
+        }
+    };
+
     // Adiciona nova mensagem recebida de outro usuário
-    function receiveMessage(chatId, message) {
+    const receiveMessage = useCallback((chatId, message) => {
         const newMessage = {
             id: message.id,
+            senderId: message.senderId,
             chatId: chatId,
             content: message.content,
             drawAttention: message.drawAttention,
             winks: message.winks
         }
+
+        if (message.drawAttention) {
+            receiveNudge(message)
+        } else if (message.winks) {
+            receiveWink(message)
+        }
+
+        console.log("💬 Mensagem recebida:", message)
         setMessages(prev => ({
             ...prev,
             [chatId]: [...(prev[chatId] || []), newMessage],
         }));
-    }
 
-    // Adiciona um novo pedido de amizade
+        if ((message.senderId !== selectedContactRef.current?.id) && (!message.drawAttention && !message.winks)) {
+
+            const sender = contactsRef.current.find(c => c.id == message.senderId)
+
+            if (!sender) {
+                console.warn("🚨 Contato não encontrado para senderId:", message.senderId);
+                return;
+            }
+
+            const audio = new Audio(sounds.newmessage);
+            setTimeout(() => {
+                audio.play();
+            }, 100);
+
+            showCustomToast(
+                t('message.title'),                      // title
+                t('message.text'),                       // text
+                false,                                   // nudge
+                sender?.avatar,                          // avatar
+                sender?.id,                              // id
+                null,                                    // wink
+                true,                                    // isMessage
+                () => { },                               // onWink
+                () => selectContact(sender?.id),         // onOpenChat
+                t('message.open')                        // translation
+            )
+        }
+    }, [contacts, selectedContact]);
+
+    // Receber um pedido de amizade
     function receiveFriendRequest(payload) {
-        showToast("📩 Novo pedido de amizade!", "info");
-        getContacts(); // Atualiza a lista de contatos
+        showCustomToast(t('friendship.title'), t('friendship.text'));
+        fetchPendingInvites()
     }
 
-    // Responde a um pedido de amizade
+    // Um amigo aceitou um pedido
     function receiveFriendResponse(payload) {
-        showToast("✅ Um amigo aceitou seu pedido de amizade!", "success");
-        getContacts(); // Atualiza a lista de contatos
+        showCustomToast(t('friendship.accepted-title'), t('friendship.accepted-text'));
+        getContacts();
     }
 
     // Atualiza status
     function updateContactStatus(payload) {
-        console.log(payload.status)
+        setContacts(prevContacts => {
+            return prevContacts.map(contact => {
+                if (contact.id === payload.id) {
+                    const wasOffline = contact.status === "offline";
+                    const isNowOnline = payload.status !== "offline";
 
-        var contacts2 = (prevContacts =>
-            prevContacts.map(contact =>
-                contact.id === payload.id
-                    ? { ...contact, status: payload.status }
-                    : contact
-            )
-        );
+                    // Se estava offline e agora está em outro status
+                    if (wasOffline && isNowOnline) {
+                        const audio = new Audio(sounds.online);
+                        setTimeout(() => {
+                            audio.play();
+                        }, 100);
 
-        console.log(contacts)
-        console.log(contacts2)
+                        showCustomToast(
+                            t('status.title'),                            // Exemplo: "Disponível"
+                            t('status.text', { name: contact.username }), // Exemplo: "Seu amigo {{name}} está disponível!"
+                            false,                      // nudge
+                            contact.avatar,             // avatar
+                            contact.id,                 // id
+                            null,                       // wink
+                            true,                      // isMessage
+                            () => { },                   // onWink
+                            () => selectContact(contact.id), // onOpenChat
+                            t('status.open')            // tradução do botão
+                        );
+                    }
 
-        setContacts(prevContacts =>
-            prevContacts.map(contact =>
-                contact.id === payload.id
-                    ? { ...contact, status: payload.status }
-                    : contact
-            )
-        );
+                    return { ...contact, status: payload.status };
+                }
+                return contact;
+            });
+        });
+
     }
 
     // Atualiza bio
@@ -354,7 +504,13 @@ export const ChatProvider = ({ children }) => {
             setLoadingId,
             fetchPendingInvites,
             messages,
+            shaking,
+            setShaking,
+            sendWink,
+            showWink,
+            ruffleRef,
             addMessage,
+            addMessageWithAI,
             getMessagesByChat,
             getMessages,
             selectedContact,
@@ -367,7 +523,7 @@ export const ChatProvider = ({ children }) => {
             connectOnSocket,
             disconnectFromSocket,
             connection,
-            logout
+            logoutChat
         }}>
             {children}
         </ChatContext.Provider>

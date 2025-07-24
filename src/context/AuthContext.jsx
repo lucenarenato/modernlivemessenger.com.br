@@ -9,17 +9,19 @@ import { updateAvatarAndBanner, updateBio, updateStatus, updateUsername } from '
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const { t } = useTranslation("auth");
-  const { showToast } = useContext(ToastContext);
+  const { t } = useTranslation("toast");
+  const { showCustomToast } = useContext(ToastContext);
 
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [options, setOptions] = useState(null);
 
   useEffect(() => {
     const storedUser = secureLocalStorage.getItem('flm-user');
     if (!storedUser) {
       secureLocalStorage.removeItem('flm-user');
       secureLocalStorage.removeItem('flm-token');
+      secureLocalStorage.removeItem('flm-options');
       return
     }
 
@@ -31,24 +33,25 @@ export const AuthProvider = ({ children }) => {
       if (now < expiresAt) {
         setUser(storedUser);
         setToken(storedToken.value);
+        const opts = secureLocalStorage.getItem('flm-options');
+        setOptions(opts);
       } else {
         secureLocalStorage.removeItem('flm-user');
         secureLocalStorage.removeItem('flm-token');
+        secureLocalStorage.removeItem('flm-options');
 
-        showToast({
-          type: 'warning',
-          message: t('login.session-expired') || 'Sua sessão expirou. Faça login novamente.',
-        });
+        showCustomToast("Error", t('errors.session-expired'));
       }
     } else {
       secureLocalStorage.removeItem('flm-user');
       secureLocalStorage.removeItem('flm-token');
+      secureLocalStorage.removeItem('flm-options');
     }
   }, []);
 
   function login(data, options) {
     const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + 7); // expira em 7 dias
+    expirationDate.setDate(expirationDate.getDate() + 7);
 
     const tokenData = {
       value: data.access_token,
@@ -57,25 +60,27 @@ export const AuthProvider = ({ children }) => {
 
     setUser(data.user);
     setToken(data.access_token);
+    setOptions(options)
 
     secureLocalStorage.setItem('flm-user', data.user);
     secureLocalStorage.setItem('flm-token', tokenData);
+    secureLocalStorage.setItem('flm-options', options);
 
   }
 
-  function logout() {
-    cleanupCallbacks.current.forEach(fn => fn?.());
-
+  function logout(showToast = false) {
     secureLocalStorage.removeItem('flm-user');
     secureLocalStorage.removeItem('flm-token');
     secureLocalStorage.removeItem('chatMessages');
+    secureLocalStorage.removeItem('flm-options');
 
     setUser(null);
     setToken(null);
+    setOptions(null);
 
-    localStorage.setItem("disconnect", true)
-
-    showToast(t("toast.logout"), "success")
+    if (showToast) {
+      showCustomToast("Error", t('errors.session-expired'));
+    }
   }
 
   async function checkSession() {
@@ -106,7 +111,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  function updateUserField(field, value, apiCall, toastKey) {
+  function updateUserField(field, value, apiCall) {
     setUser((prevUser) => {
       if (!prevUser) return prevUser;
 
@@ -129,7 +134,7 @@ export const AuthProvider = ({ children }) => {
         const revertedUser = { ...updatedUser, [field]: previousValue };
         setUser(revertedUser);
         secureLocalStorage.setItem('flm-user', revertedUser);
-        showToast(t(toastKey) || "Erro ao atualizar.", "error");
+        showCustomToast("Error", t('errors.update'));
       }
 
       return updatedUser;
@@ -137,23 +142,23 @@ export const AuthProvider = ({ children }) => {
   }
 
   function changeStatus(status) {
-    updateUserField("status", status, updateStatus, "toast.error-updating-status");
+    updateUserField("status", status, updateStatus);
   }
 
   function changeUsername(username) {
-    updateUserField("username", username, updateUsername, "toast.error-updating-username");
+    updateUserField("username", username, updateUsername);
   }
 
   function changeBio(bio) {
-    updateUserField("bio", bio, updateBio, "toast.error-updating-bio");
+    updateUserField("bio", bio, updateBio);
   }
 
   function changeAvatar(avatar) {
-    updateUserField("avatar", avatar, updateAvatarAndBanner, "toast.error-updating-avatar");
+    updateUserField("avatar", avatar, updateAvatarAndBanner);
   }
 
   function changeBanner(banner) {
-    updateUserField("banner", banner, updateAvatarAndBanner, "toast.error-updating-banner");
+    updateUserField("banner", banner, updateAvatarAndBanner);
   }
 
   return (
@@ -163,6 +168,7 @@ export const AuthProvider = ({ children }) => {
       token,
       setToken,
       login,
+      logout,
       checkSession,
       changeStatus,
       changeUsername,

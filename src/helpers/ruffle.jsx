@@ -43,11 +43,10 @@ const Ruffle = forwardRef((_, ref) => {
     if (containerRef.current) {
       containerRef.current.appendChild(player);
       player.load(path);
-
       timeoutRef.current = setTimeout(() => {
         containerRef.current.innerHTML = '';
         setIsPlaying(false);
-      }, duration * 1000);
+      }, duration * 990);
     }
 
     setIsPlaying(true);
@@ -66,7 +65,7 @@ const Ruffle = forwardRef((_, ref) => {
   }, []);
 
   return (
-    <div className="absolute top-0 left-0 flex w-full h-full justify-center items-center pointer-events-none">
+    <div className="absolute top-0 left-0 z-[1000] flex w-full h-full justify-center items-center pointer-events-none">
       <div ref={containerRef} />
     </div>
   );

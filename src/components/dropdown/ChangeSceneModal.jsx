@@ -8,19 +8,25 @@ import Color from 'color-thief-react';
 export default function ChangeBannerModal({ setShowChangeBannerModal }) {
   const { user, changeBanner } = useContext(AuthContext);
 
-  const [userBanner, setUserBanner] = useState(localStorage.getItem('scene'));
+  const [userBanner, setUserBanner] = useState(user.banner);
   const [userColorScheme, setUserColorScheme] = useState(localStorage.getItem('colorScheme'));
   const [selected, setSelected] = useState(null);
 
   const updateUserBanner = (banner) => {
     setUserBanner(banner);
-    changeBanner(banner);
   };
 
   const updateUserColorScheme = (color) => {
-    localStorage.setItem('colorScheme', color);
     setUserColorScheme(color);
   };
+
+  function applyAndClose() {
+    if (userBanner !== user.banner) {
+      changeBanner(userBanner);
+    }
+    localStorage.setItem('colorScheme', userColorScheme);
+    setShowChangeBannerModal(false);
+  }
 
   const fileInputRef = useRef(null);
 
@@ -45,106 +51,110 @@ export default function ChangeBannerModal({ setShowChangeBannerModal }) {
   };
 
   return (
-    <>
-      <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-        <div className="relative w-auto my-6 mx-auto max-w-3xl">
-          <div className="rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none bg-gradient-to-t from-[#c3d4ec83] via-white to-[#c3d4ec83]">
-            <div className="flex items-start justify-between rounded-t-lg bg-[#f3f3f3]">
-              <div className="flex items-center ml-1">
-                <div>
-                  <img src="/assets/general/wlm-icon.png" alt="WLM Icon" />
-                </div>
-                <p className="ml-1 pt-1">Scene</p>
-              </div>
-              <button
-                className="pb-2 pt-1 px-3 rounded-tr-lg hover:bg-red-700 hover:text-white"
-                onClick={() => setShowChangeBannerModal(false)}
-              >
-                <p className="text-[10px]">╳</p>
-              </button>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-xs">
+
+      <div className="justify-center mt-6 items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+        <div
+          className="window active"
+          style={{
+            width: '400px',
+            maxWidth: '90%',
+            zIndex: 1000,
+            maxHeight: '90%'
+          }}
+
+        >
+          <div className="title-bar">
+            <div className="title-bar-text flex items-center gap-2">
+              <img src="/assets/general/wlm-icon.png" alt="WLM Icon" />
+              Scene
             </div>
+            <div className="title-bar-controls">
+              <button aria-label="Close" onClick={() => setShowChangeBannerModal(false)}></button>
+            </div>
+          </div>
+          <div className="window-body">
 
-            <p className="opacity-60 m-3">The people you chat with will see the scene and color scheme you choose.</p>
+            <div className="flex flex-col w-full bg-white bg-gradient-to-t from-[#c3d4ec83] via-white to-[#c3d4ec83]">
 
-            <div className="flex ml-4">
-              <div>
-                <img src="/assets/general/select_a_scene.png" alt="Select a scene" />
+              {/* Body */}
+              <div className="mx-4 mb-2">
+                <p className="mt-2 text-xl text-[#1D2F7F]">Select a scene</p>
+                <p className="opacity-60">The people you chat with will see the scene and color scheme you choose.</p>
               </div>
-              <div className="win7 mr-4">
-                <p className="ml-2 text-[16px] text-[#1D2F7F]">Select a scene</p>
-                <div className="flex flex-wrap w-[460px] h-[275px] overflow-y-auto p-2.5 has-scrollbar mb-2">
-                  {Object.entries(scenes).map(([name, src]) => (
-                    <div
-                      key={name}
-                      className={`hoverscene p-0.5 pb-1.5 pr-1.5 rounded-sm ${selected === name ? 'selectedscene' : ''}`}
-                      onClick={() => handleClick(name)}
-                    >
+
+              <div className="flex flex-row items-center ml-2">
+                <div className="win7">
+                  <div className="flex flex-wrap sm:w-[360px] h-[140px] overflow-y-auto p-2.5 has-scrollbar mb-2">
+                    {Object.entries(scenes).map(([name, src]) => (
                       <div
-                        onClick={() => updateUserBanner(name)}
-                        className="cursor-pointer w-24 shadow-lg usertiles-shadow border border-hidden"
+                        key={name}
+                        className={`hoverscene p-0.5 py-1 px-1 rounded-sm ${selected === name ? 'selectedscene' : ''}`}
+                        onClick={() => handleClick(name)}
                       >
-                        <img src={src} alt={name} className="object-cover h-12" />
+                        <div
+                          onClick={() => updateUserBanner(name)}
+                          className="cursor-pointer w-24 shadow-lg usertiles-shadow border border-hidden"
+                        >
+                          <img src={src} alt={name} className="object-cover h-12" />
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                  <button disabled className="ml-2 mt-1 mb-1" onClick={handleButtonClick}>
+                    Browse...
+                  </button>
+                  <div className="win7 mr-4 mb-4">
+                    <p className="ml-2 text-[16px] text-[#1D2F7F]">Select a color scheme</p>
+                    <div className="flex gap-1.5 ml-2.5 m-2 mb-2">
+                      {userBanner && (
+                        <Color src={userBanner} crossOrigin="anonymous" format="hex">
+                          {({ data }) => {
+                            useEffect(() => {
+                              if (data) {
+                                updateUserColorScheme(data);
+                              }
+                            }, [data]);
+
+                            return (
+                              <div className="cursor-pointer flex">
+                                <div style={{ backgroundColor: data }} className="w-[18px] h-[18px] absolute rounded-[3px]"></div>
+                                <img src="/assets/color_schemes/smoke.png" alt="" className="mix-blend-luminosity" />
+                              </div>
+                            );
+                          }}
+                        </Color>
+                      )}
+                      {Object.entries(colorSchemes).map(([name, src]) => (
+                        <div key={name} onClick={() => updateUserColorScheme(src)} className="cursor-pointer">
+                          <img src={src} alt={name} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                <button className="ml-2 mt-[-20px] mb-2" onClick={handleButtonClick}>
-                  Browse...
+
+
+              </div>
+
+              {/* Footer */}
+              <div className="w-full bg-white h-[1px] shadow-sm shadow-[#6b8fa3]" />
+              <div className="flex items-center justify-end rounded-b win7 p-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => applyAndClose()}
+                >
+                  Apply
+                </button>
+                <button type="button" onClick={() => setShowChangeBannerModal(false)}>
+                  Close
                 </button>
               </div>
-            </div>
-
-            <div className="flex ml-4 mt-8">
-              <div>
-                <img src="/assets/general/select_a_color_scheme.png" alt="Select a color scheme" />
-              </div>
-              <div className="win7 mr-4 mb-4">
-                <p className="ml-2 text-[16px] text-[#1D2F7F]">Select a color scheme</p>
-                <div className="flex gap-1.5 ml-2.5 m-2 mb-2">
-                  {userBanner && (
-                    <Color src={userBanner} crossOrigin="anonymous" format="hex">
-                      {({ data }) => {
-                        useEffect(() => {
-                          if (data) {
-                            updateUserColorScheme(data);
-                          }
-                        }, [data]);
-
-                        return (
-                          <div className="cursor-pointer flex">
-                            <div style={{ backgroundColor: data }} className="w-[18px] h-[18px] absolute rounded-[3px]"></div>
-                            <img src="/assets/color_schemes/smoke.png" alt="" className="mix-blend-luminosity" />
-                          </div>
-                        );
-                      }}
-                    </Color>
-                  )}
-                  {Object.entries(colorSchemes).map(([name, src]) => (
-                    <div key={name} onClick={() => updateUserColorScheme(src)} className="cursor-pointer">
-                      <img src={src} alt={name} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full bg-white h-[1px] shadow-sm shadow-[#6b8fa3]" />
-            <div className="flex items-center justify-end rounded-b win7 p-3 gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowChangeBannerModal(false)}
-              >
-                OK
-              </button>
-              <button type="button" onClick={() => setShowChangeBannerModal(false)}>
-                Close
-              </button>
             </div>
           </div>
         </div>
       </div>
-      <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-    </>
+    </div >
   );
 };

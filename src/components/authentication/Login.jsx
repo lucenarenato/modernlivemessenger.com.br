@@ -7,13 +7,16 @@ import Avatar from '../Avatar';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
 import { loginRequest } from '../../data/authentication'
+import { ChatContext } from '../../context/ChatContext';
+import statusFrames from '../../imports/statusFrames';
 
 export default function Login({ showRegisterComponent, showResetComponent }) {
     const { t } = useTranslation("auth");
 
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useContext(AuthContext);
-    const { showToast } = useContext(ToastContext);
+    const { login, changeStatus } = useContext(AuthContext);
+    const { connectOnSocket } = useContext(ChatContext);
+    const { showCustomToast } = useContext(ToastContext);
 
     const {
         register,
@@ -50,27 +53,48 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
         })
             .then(response => {
                 if (response.status == 201) {
+                    const userStatus = response.data.user.status;
+                    const selectedStatus = data.status;
+
                     login(response.data, data);
+                    connectOnSocket();
+
+                    // Se o status atual no banco for diferente do selecionado no login,
+                    // chamamos o `changeStatus` para atualizá-lo.
+                    if (userStatus !== selectedStatus) {
+                        changeStatus(selectedStatus);
+                    }
                     setIsLoading(false);
-                    showToast("Autenticado com sucesso.", "success");
+                    connectOnSocket()
+                    showCustomToast("Login", t('login.success'));
                     return
                 }
                 if (response.status == 401 || response.status == 404) {
-                    showToast("Credenciais inválidas.", "error");
+                    showCustomToast("Login", t('login.invalid'));
                     setIsLoading(false);
                 }
                 else {
-                    showToast("Algo ocorreu mal no login.", "error");
+                    showCustomToast("Login", t('login.error'));
                     setIsLoading(false);
                 }
             })
             .catch(err => {
-                showToast("An error occurred during login.", "error");
+                showCustomToast("Login", t('login.error'));
                 setIsLoading(false);
             });
 
     };
 
+    const options = [
+        { value: 'online', label: t('status.online'), image: statusFrames.onlineDot },
+        { value: 'busy', label: t('status.busy'), image: statusFrames.busyDot },
+        { value: 'away', label: t('status.away'), image: statusFrames.awayDot },
+        {
+            value: 'offline',
+            label: t('status.offline'),
+            image: statusFrames.offlineDot,
+        },
+    ]
 
     return (
         <div
@@ -114,7 +138,7 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
                         </div>
 
                         <div className="text-left">
-                            <a onClick={showResetComponent} className="cursor-pointer text-xs hover:underline">{t('login.forgot')}</a>
+                            <a className="cursor-pointer text-xs hover:underline">{t('login.forgot')}</a>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm mt-3 mb-1.5">
@@ -123,17 +147,10 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
                                 name="status"
                                 control={control}
                                 render={({ field }) => {
-                                    const colorMap = {
-                                        online: 'bg-green-500',
-                                        away: 'bg-red-500',
-                                        busy: 'bg-orange-400',
-                                        invisible: 'bg-gray-400',
-                                    };
-
                                     return (
                                         <Select.Root value={field.value} onValueChange={field.onChange}>
                                             <Select.Trigger
-                                                className="px-1 py-1 rounded-md border border-gray-300 bg-white text-sm text-gray-800 flex items-center justify-between min-w-[120px]"
+                                                className="px-1 py-1 rounded-md text-sm text-gray-800 flex items-center justify-between min-w-[120px]"
                                                 style={{
                                                     all: 'unset',
                                                     display: 'flex',
@@ -145,8 +162,15 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
                                             >
                                                 <Select.Value asChild>
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className={`w-2.5 h-2.5 rounded-sm ${colorMap[field.value]} border-2 border-gray-300`} />
-                                                        <span>{t(`status.${field.value}`)}</span>
+                                                        {(() => {
+                                                            const current = options.find(o => o.value === field.value);
+                                                            return (
+                                                                <>
+                                                                    <img src={current?.image} alt="" className="w-2.5 h-2.5 rounded-sm border-2 border-gray-300" />
+                                                                    <span>{current?.label}</span>
+                                                                </>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </Select.Value>
                                                 <Select.Icon>
@@ -157,14 +181,14 @@ export default function Login({ showRegisterComponent, showResetComponent }) {
                                             <Select.Portal>
                                                 <Select.Content className="ml-4 bg-white shadow-md">
                                                     <Select.Viewport>
-                                                        {['online', 'away', 'busy', 'invisible'].map((value) => (
+                                                        {options.map(({ value, label, image }) => (
                                                             <Select.Item
                                                                 key={value}
                                                                 value={value}
                                                                 className="text-sm px-2 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 cursor-pointer"
                                                             >
-                                                                <span className={`w-2.5 h-2.5 rounded-sm ${colorMap[value]} border-2 border-gray-300`} />
-                                                                <Select.ItemText>{t(`status.${value}`)}</Select.ItemText>
+                                                                <img src={image} alt="" className="w-2.5 h-2.5 rounded-sm border-2 border-gray-300" />
+                                                                <Select.ItemText>{label}</Select.ItemText>
                                                             </Select.Item>
                                                         ))}
                                                     </Select.Viewport>

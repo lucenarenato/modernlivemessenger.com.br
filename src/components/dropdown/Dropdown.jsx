@@ -5,15 +5,24 @@ import ChangeNameAndBio from './ChangeNameAndBio';
 import { replaceEmoticons } from '../../helpers/replaceEmoticons';
 import { AuthContext } from '../../context/AuthContext';
 import { ChatContext } from '../../context/ChatContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Dropdown({ options, showStatusDots = false }) {
     const { user, changeStatus } = useContext(AuthContext);
-    const { logout } = useContext(ChatContext);
+    const { logoutChat } = useContext(ChatContext);
+
+    const { i18n } = useTranslation();
 
     const [changePictureShowModal, setShowChangePictureModal] = useState(false);
-    const [showChangeNameAndBio, seShowChangeNameAndBio] = useState(false);
+    const [showChangeNameAndBio, setShowChangeNameAndBio] = useState(false);
     const [showChangeBannerModal, setShowChangeBannerModal] = useState(false);
     const [selectedOption, setSelectedOption] = useState(options.find((option) => option.value === user.status) || options[0]);
+
+    useEffect(() => {
+        setSelectedOption(options.find((option) => option.value === user.status) || options[0]);
+    }, [i18n.language])
+
+
     const [isOpen, setIsOpen] = useState(false);
 
     const dropdownRef = useRef(null);
@@ -29,7 +38,7 @@ export default function Dropdown({ options, showStatusDots = false }) {
                 setIsOpen(false);
                 break;
             case 'Sign out':
-                logout()
+                logoutChat()
                 break;
             case 'ChangeDisplayPicture':
                 setShowChangePictureModal(true);
@@ -38,7 +47,7 @@ export default function Dropdown({ options, showStatusDots = false }) {
                 setShowChangeBannerModal(true);
                 break;
             case 'ChangeDisplayName':
-                seShowChangeNameAndBio(true);
+                setShowChangeNameAndBio(true);
                 break;
             default:
                 break;
@@ -74,12 +83,12 @@ export default function Dropdown({ options, showStatusDots = false }) {
                     {user &&
                         (user.username !== '' ? (
                             <span
-                                className="flex gap-1 text-lg items-baseline"
+                                className="flex max-w-56 gap-1 text-lg items-baseline truncate"
                                 dangerouslySetInnerHTML={{ __html: replaceEmoticons(user.username) }}
                             />
                         ) : (
                             <span
-                                className="flex gap-1 text-lg items-baseline"
+                                className="flex max-w-56 gap-1 text-lg items-baseline truncate"
                                 dangerouslySetInnerHTML={{ __html: replaceEmoticons(user.email) }}
                             />
                         ))}
@@ -114,7 +123,7 @@ export default function Dropdown({ options, showStatusDots = false }) {
 
             {changePictureShowModal && <ChangeDisplayPictureModal setShowChangePictureModal={setShowChangePictureModal} />}
             {showChangeBannerModal && <ChangeSceneModal setShowChangeBannerModal={setShowChangeBannerModal} />}
-            {showChangeNameAndBio && <ChangeNameAndBio seShowChangeNameAndBio={seShowChangeNameAndBio} />}
+            {showChangeNameAndBio && <ChangeNameAndBio setShowChangeNameAndBio={setShowChangeNameAndBio} />}
         </div>
     );
 };
