@@ -144,7 +144,7 @@ export default function Window({ windowId = 'main', closeChat, minimizeChat }) {
                     <div className="title-bar">
                         <div className="title-bar-text flex items-center gap-2">
                             <img src="./wlm-logo.png" alt="MSN Icon" className="w-5 h-5" />
-                            Furg Live Messenger
+                            Modern Live Messenger
                         </div>
                         <div className="title-bar-controls">
                             <button aria-label="Minimize" onClick={() => minimizeChat()} />
