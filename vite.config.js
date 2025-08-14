@@ -28,5 +28,8 @@ export default defineConfig({
   base: '/',
   server: {
     historyApiFallback: true,
-  }
+  },
+  esbuild: {
+    pure: ['console.log'],
+  },
 })
