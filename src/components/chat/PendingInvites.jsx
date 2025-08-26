@@ -12,7 +12,7 @@ import { ChatContext } from "../../context/ChatContext";
 import { useTranslation } from "react-i18next";
 
 export default function PendingInvites() {
-    const { t } = useTranslation('toast');
+    const { t } = useTranslation(["toast", "friendship"]);
 
     const { getContacts } = useContext(ChatContext);
 
@@ -28,7 +28,6 @@ export default function PendingInvites() {
     const [showModal, setShowModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
 
-
     useEffect(() => {
         fetchPendingInvites()
     }, [pendingInvites]);
@@ -38,21 +37,28 @@ export default function PendingInvites() {
         accpeptFriendshipInvite(id)
             .then((response) => {
                 if (response.status === 200 || response.status === 201) {
-                    showCustomToast(t("friendship.accepted-title"), t("friendship.accepted-text"));
-
+                    showCustomToast(
+                        t("friendship:accepted-title"),
+                        t("friendship:accepted-text")
+                    );
                     setPendingInvites((prev) => {
                         const updated = prev.filter((inv) => inv.id !== id);
                         if (updated.length === 0) setShowModal(false);
                         return updated;
                     });
-
                     getContacts();
                 } else {
-                    showCustomToast(t("friendship.accepted-error-title"), t("friendship.accepted-error"));
+                    showCustomToast(
+                        t("friendship:accepted-error-title"),
+                        t("friendship:accepted-error")
+                    );
                 }
             })
             .catch(() => {
-                showCustomToast(t("friendship.generic-error-title"), t("friendship.generic-error"));
+                showCustomToast(
+                    t("friendship:generic-error-title"),
+                    t("friendship:generic-error")
+                );
             })
             .finally(() => {
                 setLoadingId(null);
@@ -60,26 +66,32 @@ export default function PendingInvites() {
             });
     };
 
-
     const handleReject = (id) => {
         setLoadingId(id);
         rejectFriendshipInvite(id)
             .then((response) => {
                 if (response.status === 200 || response.status === 201) {
-                    showCustomToast(t("friendship.rejected-title"), t("friendship.rejected"));
-
+                    showCustomToast(
+                        t("friendship:rejected-title"),
+                        t("friendship:rejected")
+                    );
                     setPendingInvites((prev) => {
                         const updated = prev.filter((inv) => inv.id !== id);
                         if (updated.length === 0) setShowModal(false);
                         return updated;
                     });
-
                 } else {
-                    showCustomToast(t("friendship.rejected-error-title"), t("friendship.rejected-error"));
+                    showCustomToast(
+                        t("friendship:rejected-error-title"),
+                        t("friendship:rejected-error")
+                    );
                 }
             })
             .catch(() => {
-                showCustomToast(t("friendship.generic-error-title"), t("friendship.generic-error"));
+                showCustomToast(
+                    t("friendship:generic-error-title"),
+                    t("friendship:generic-error")
+                );
             })
             .finally(() => {
                 setLoadingId(null);
@@ -99,7 +111,7 @@ export default function PendingInvites() {
                     onClick={() => setShowModal(true)}
                     className="text-blue-500 text-base cursor-pointer underline"
                 >
-                    Você tem {pendingInvites.length} novos pedidos de amizade
+                    {t("friendship:new-invites", { count: pendingInvites.length })}
                 </div>
             </div>
         );
@@ -116,7 +128,7 @@ export default function PendingInvites() {
                         onClick={() => setShowModal(true)}
                         className="text-blue-500 text-base cursor-pointer underline"
                     >
-                        Você tem {pendingInvites.length} novos pedidos de amizade
+                        {t("friendship:new-invites", { count: pendingInvites.length })}
                     </div>
                 </div>
 
@@ -128,7 +140,7 @@ export default function PendingInvites() {
                         <div className="title-bar">
                             <div className="title-bar-text flex items-center gap-2">
                                 <img src="/assets/general/wlm-icon.png" alt="WLM Icon" />
-                                Pedidos de amizade
+                                {t("friendship:invites-title")}
                             </div>
                             <div className="title-bar-controls">
                                 <button aria-label="Close" onClick={() => setShowModal(false)} />
@@ -137,7 +149,9 @@ export default function PendingInvites() {
                         <div className="window-body">
                             <div className="flex flex-col gap-4">
                                 {pendingInvites.length === 0 && (
-                                    <div className="text-center">Nenhum pedido pendente.</div>
+                                    <div className="text-center">
+                                        {t("friendship:no-pending")}
+                                    </div>
                                 )}
                                 {pendingInvites.map((invite) => (
                                     <div
@@ -182,7 +196,11 @@ export default function PendingInvites() {
                                                         {loadingId === invite.id ? (
                                                             "..."
                                                         ) : (
-                                                            <p>{confirmAction.type === "accept" ? "Aceitar" : "Recusar"}</p>
+                                                            <p>
+                                                                {confirmAction.type === "accept"
+                                                                    ? t("friendship:accept")
+                                                                    : t("friendship:reject")}
+                                                            </p>
                                                         )}
                                                     </button>
                                                     <button
@@ -190,7 +208,7 @@ export default function PendingInvites() {
                                                         onClick={() => setConfirmAction(null)}
                                                         className="p-1 text-xs font-semibold rounded border flex items-center justify-center"
                                                     >
-                                                        Cancelar
+                                                        {t("friendship:cancel")}
                                                     </button>
                                                 </>
                                             ) : (
@@ -221,10 +239,6 @@ export default function PendingInvites() {
                     </div>
                 </div >
             </>
-
-
         );
-
     }
-
 }
