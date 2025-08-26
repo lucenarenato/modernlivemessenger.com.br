@@ -1,5 +1,18 @@
 import OpenAI from 'openai';
 
+export const getOpenAIResponse = async (messages, apiProxy) => {
+  const res = await fetch(apiProxy, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+
+  const data = await res.json();
+  return data.reply;
+};
+
+/**
+
 export const getOpenAIResponse = async (messages, apiKey) => {
     const openai = new OpenAI({
         apiKey: apiKey,
@@ -96,3 +109,5 @@ export const getOpenAIResponse = async (messages, apiKey) => {
         return errorMessageContent;
     }
 };
+
+*/
