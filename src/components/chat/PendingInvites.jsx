@@ -60,6 +60,7 @@ export default function PendingInvites() {
             });
     };
 
+
     const handleReject = (id) => {
         setLoadingId(id);
         rejectFriendshipInvite(id)

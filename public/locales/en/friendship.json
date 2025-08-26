@@ -1,0 +1,18 @@
+{
+    "new-invites": "You have {{count}} new friend requests",
+    "invites-title": "Friend requests",
+    "no-pending": "No pending requests.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "accepted-title": "Friendship accepted!",
+    "accepted-text": "You have successfully added the contact.",
+    "accepted-error-title": "Error accepting",
+    "accepted-error": "Could not accept the request.",
+    "rejected-title": "Request rejected",
+    "rejected": "You have rejected the friend request.",
+    "rejected-error-title": "Error rejecting",
+    "rejected-error": "Could not reject the request.",
+    "generic-error-title": "Error",
+    "generic-error": "Something went wrong. Please try again."
+}

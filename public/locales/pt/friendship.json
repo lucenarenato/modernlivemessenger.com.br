@@ -1,0 +1,18 @@
+{
+    "new-invites": "Você tem {{count}} novos pedidos de amizade",
+    "invites-title": "Pedidos de amizade",
+    "no-pending": "Nenhum pedido pendente.",
+    "accept": "Aceitar",
+    "reject": "Recusar",
+    "cancel": "Cancelar",
+    "accepted-title": "Amizade aceita!",
+    "accepted-text": "Você adicionou o contato com sucesso.",
+    "accepted-error-title": "Erro ao aceitar",
+    "accepted-error": "Não foi possível aceitar o pedido.",
+    "rejected-title": "Pedido recusado",
+    "rejected": "Você recusou o pedido de amizade.",
+    "rejected-error-title": "Erro ao recusar",
+    "rejected-error": "Não foi possível recusar o pedido.",
+    "generic-error-title": "Erro",
+    "generic-error": "Algo deu errado. Tente novamente."
+}
