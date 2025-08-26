@@ -20,7 +20,8 @@ import scenes from '../../imports/scenes';
 import { replaceEmoticons } from '../../helpers/replaceEmoticons';
 import { getOpenAIResponse } from '../../data/openai';
 
-const apiKey = import.meta.env.VITE_OPEN_AI_API_KEY;
+//const apiKey = import.meta.env.VITE_OPEN_AI_API_KEY;
+const apiProxy = import.meta.env.VITE_PROXY_URL;
 
 export default function IndividualChat({ windowId = 'chat', close }) {
     const { topWindowId, setTopWindowId } = useWindowManager();
@@ -191,7 +192,9 @@ export default function IndividualChat({ windowId = 'chat', close }) {
             }));
 
         // Chamando a IA apenas com as mensagens filtradas
-        getOpenAIResponse(lastMessages, apiKey).then(reply => {
+        // função antiga -> getOpenAIResponse(lastMessages, apiKey)
+        
+        getOpenAIResponse(lastMessages, apiProxy).then(reply => {
             setContactTyping(false);
 
             const newAIMessage = {
