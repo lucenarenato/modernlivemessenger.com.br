@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 export default function AddFriend({ isOpen, onClose }) {
     if (!isOpen) return null;
 
-    const { t } = useTranslation('toast');
+    const { t } = useTranslation("friendship");
 
     const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState('');
@@ -21,17 +21,32 @@ export default function AddFriend({ isOpen, onClose }) {
         sendFriendshipInviteWithEmail({ email })
             .then(response => {
                 if (response.status === 201) {
-                    showCustomToast(t("friendship.request-sent-title"), t("request-sent"));
+                    showCustomToast(
+                        t("request-sent-title"),
+                        t("request-sent")
+                    );
                 } else if (response.status === 401 || response.status === 404) {
-                    showCustomToast(t("friendship.invalid-title"), t("friendship.invalid"));
+                    showCustomToast(
+                        t("invalid-title"),
+                        t("invalid")
+                    );
                 } else if (response.status === 409) {
-                    showCustomToast(t("friendship.already-sent-title"), t("friendship.already-sent"));
+                    showCustomToast(
+                        t("already-sent-title"),
+                        t("already-sent")
+                    );
                 } else {
-                    showCustomToast(t("friendship.error-title"), t("friendship.error"));
+                    showCustomToast(
+                        t("error-title"),
+                        t("error")
+                    );
                 }
             })
-            .catch(err => {
-                showCustomToast(t("friendship.error-title"), t("friendship.error"));
+            .catch(() => {
+                showCustomToast(
+                    t("error-title"),
+                    t("error")
+                );
             })
             .finally(() => setIsLoading(false));
     };
@@ -49,16 +64,19 @@ export default function AddFriend({ isOpen, onClose }) {
                 <div className="title-bar">
                     <div className="title-bar-text flex items-center gap-2">
                         <img src="/assets/general/wlm-icon.png" alt="WLM Icon" />
-                        Adicionar Usuário
+                        {t("add-user")}
                     </div>
                     <div className="title-bar-controls">
                         <button aria-label="Close" onClick={onClose}></button>
                     </div>
                 </div>
                 <div className="window-body">
-                    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="flex flex-col gap-2 p-5">
+                    <form
+                        onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+                        className="flex flex-col gap-2 p-5"
+                    >
                         <div className="field-row-stacked">
-                            <label htmlFor="email">E-mail</label>
+                            <label htmlFor="email">{t("email")}</label>
                             <input
                                 id="email"
                                 type="email"
@@ -71,9 +89,11 @@ export default function AddFriend({ isOpen, onClose }) {
 
                         <div className="field-row mt-3 justify-end">
                             <button type="submit" className="default" disabled={isLoading}>
-                                {isLoading ? 'Enviando...' : 'Enviar pedido'}
+                                {isLoading ? t("sending") : t("send-request")}
                             </button>
-                            <button type="button" onClick={onClose}>Cancelar</button>
+                            <button type="button" onClick={onClose}>
+                                {t("cancel")}
+                            </button>
                         </div>
                     </form>
                 </div>
